@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/shurcooL/githubv4"
@@ -30,11 +31,10 @@ func main() {
 					Url          githubv4.URI
 					ProjectCards struct {
 						Nodes []struct {
-							id     githubv4.ID
 							Column struct {
-								name githubv4.String
-							} `graphql:"column"`
-						} `graphql:"nodes"`
+								Name githubv4.String
+							}
+						}
 					} `graphql:"projectCards"`
 					Labels struct {
 						Nodes []struct {
@@ -54,7 +54,7 @@ func main() {
 	client := githubv4.NewClient(httpClient)
 	err := client.Query(context.Background(), &query, nil)
 	if err != nil {
-		// Handle error.
+		log.Fatal(err)
 	}
 	fmt.Println("    foo:", query.Repository.Issues.TotalCount)
 	fmt.Println("    foo:", query.Repository.Issues.PageInfo.StartCursor)
@@ -71,7 +71,7 @@ func main() {
 		}
 
 		for _, ghColumn := range issue.ProjectCards.Nodes {
-			fmt.Println("   Column:", ghColumn.Column.name)
+			fmt.Println("   Column:", ghColumn.Column.Name)
 		}
 	}
 }
