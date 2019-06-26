@@ -110,11 +110,12 @@ func updatePrometheusMetrics(results *Query) {
 		for _, leadTime := range leadTimes {
 			sumLeadTimes += leadTime
 		}
-		log.Info("count: ", float64(len(leadTimes)))
-		log.Info("days: ", sumLeadTimes.Hours()/24)
 		averageLeadTime = float64(sumLeadTimes.Hours()/24) / float64(len(leadTimes))
-		log.Info("averageLeadtime: ", averageLeadTime)
+
+		// TODO: Calculate cycle times
 	}
+
+	//TODO: get in progress issues
 
 	ghOpenIssues.Set(float64(openIssueCounter))
 	ghClosedIssues.Set(float64(closedIssueCounter))
@@ -122,9 +123,6 @@ func updatePrometheusMetrics(results *Query) {
 	ghOpenL3Issues.Set(float64(openL3Counter))
 	ghBlockedIssues.Set(float64(blockedIssueCounter))
 	ghLeadTime.Set(averageLeadTime)
-
-	//TODO: get in progress issues
-
 }
 
 func main() {
@@ -134,6 +132,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	// Start go routine that updates values continously in the background
 	go func() {
 		for {
 			log.Info("Updating metrics from Github: %", time.Now())
@@ -144,6 +143,7 @@ func main() {
 		}
 	}()
 
+	// Start the websever
 	http.Handle("/metrics", promhttp.Handler())
 	log.Info("Beginning to serve on port :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
