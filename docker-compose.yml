@@ -2,12 +2,10 @@ version: '3'
 services:
 
   prometheus:
-    image: prom/prometheus:0.18.0
+    image: prom/prometheus:v2.10.0
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - ./prometheus_data:/prometheus
-    command:
-      - '-config.file=/etc/prometheus/prometheus.yml'
     ports:
       - '9090:9090'
 
@@ -21,7 +19,7 @@ services:
         - '8080:8080'
 
   grafana:
-    image: grafana/grafana:3.0.0-beta7
+    image: grafana/grafana:6.2.5
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
