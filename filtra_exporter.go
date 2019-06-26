@@ -12,47 +12,55 @@ import (
 )
 
 const (
-	updateInterval = 15 // in seconds
+	updateInterval = 3600 // in seconds
 )
 
 var debugFlag = flag.Bool("debug", false, "Sets log level to debug.")
 
 //Define the metrics
-var allIssues = prometheus.NewGauge(prometheus.GaugeOpts{
+var ghAllIssues = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "gh_all_issues", Help: "All issues"})
 
-var openIssues = prometheus.NewGauge(prometheus.GaugeOpts{
+var ghOpenIssues = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "gh_open_issues", Help: "Open issues"})
 
-var inProgress = prometheus.NewGauge(prometheus.GaugeOpts{
+var ghInProgress = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "gh_in_progress", Help: "Issues that are currently in progress"})
 
-var blockedIssues = prometheus.NewGauge(prometheus.GaugeOpts{
+var ghBlockedIssues = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "gh_blocked_issues", Help: "Issues that are currently blocked or waiting for response"})
 
-var closedIssues = prometheus.NewGauge(prometheus.GaugeOpts{
+var ghClosedIssues = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "gh_closed_issues", Help: "Closed issues"})
 
-var openL3Issues = prometheus.NewGauge(prometheus.GaugeOpts{
+var ghOpenL3Issues = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "gh_open_l3_issues", Help: "Open L3 issues"})
 
-var openBugs = prometheus.NewGauge(prometheus.GaugeOpts{
+var ghOpenBugs = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "gh_open_bug_issues", Help: "Open bugs"})
+
+var ghLeadTime = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "gh_lead_time", Help: "Average lead time of closed issues"})
+
+var ghCycleTime = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "gh_cycle_time", Help: "Average cycle time of closed issues"})
 
 func init() {
 	//Register metrics with prometheus
-	prometheus.MustRegister(allIssues)
-	prometheus.MustRegister(openIssues)
-	prometheus.MustRegister(inProgress)
-	prometheus.MustRegister(blockedIssues)
-	prometheus.MustRegister(closedIssues)
-	prometheus.MustRegister(openL3Issues)
-	prometheus.MustRegister(openBugs)
+	prometheus.MustRegister(ghAllIssues)
+	prometheus.MustRegister(ghOpenIssues)
+	prometheus.MustRegister(ghInProgress)
+	prometheus.MustRegister(ghBlockedIssues)
+	prometheus.MustRegister(ghClosedIssues)
+	prometheus.MustRegister(ghOpenL3Issues)
+	prometheus.MustRegister(ghOpenBugs)
+	prometheus.MustRegister(ghLeadTime)
+	prometheus.MustRegister(ghCycleTime)
 }
 
 func updatePrometheusMetrics(results *Query) {
 	// All issues
-	allIssues.Set(float64(results.Repository.Issues.TotalCount))
+	ghAllIssues.Set(float64(results.Repository.Issues.TotalCount))
 
 	// Closed and open issues
 	closedIssueCounter := 0
@@ -85,13 +93,35 @@ func updatePrometheusMetrics(results *Query) {
 				break
 			}
 		}
+
 	}
 
-	openIssues.Set(float64(openIssueCounter))
-	closedIssues.Set(float64(closedIssueCounter))
-	openBugs.Set(float64(openBugsCounter))
-	openL3Issues.Set(float64(openL3Counter))
-	blockedIssues.Set(float64(blockedIssueCounter))
+	// Calculate lead and cyle times
+	var leadTimes []time.Duration
+	var averageLeadTime float64
+	for _, issue := range results.Repository.Issues.Nodes {
+		//TODO: Calculate cycle time
+		if issue.State == "CLOSED" {
+			leadTime := issue.ClosedAt.Sub(issue.CreatedAt.Time)
+			leadTimes = append(leadTimes, leadTime)
+		}
+		// calculate average of lead times
+		var sumLeadTimes time.Duration
+		for _, leadTime := range leadTimes {
+			sumLeadTimes += leadTime
+		}
+		log.Info("count: ", float64(len(leadTimes)))
+		log.Info("days: ", sumLeadTimes.Hours()/24)
+		averageLeadTime = float64(sumLeadTimes.Hours()/24) / float64(len(leadTimes))
+		log.Info("averageLeadtime: ", averageLeadTime)
+	}
+
+	ghOpenIssues.Set(float64(openIssueCounter))
+	ghClosedIssues.Set(float64(closedIssueCounter))
+	ghOpenBugs.Set(float64(openBugsCounter))
+	ghOpenL3Issues.Set(float64(openL3Counter))
+	ghBlockedIssues.Set(float64(blockedIssueCounter))
+	ghLeadTime.Set(averageLeadTime)
 
 	//TODO: get in progress issues
 
