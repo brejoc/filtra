@@ -10,6 +10,11 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// QueryPages holds the multiple pages (Query) we can get from Github.
+type QueryPages struct {
+	Queries []Query
+}
+
 // Query is used to perform the Graphql query and also
 // holds the results afterwards.
 type Query struct {
@@ -40,41 +45,59 @@ type Query struct {
 					}
 				} `graphql:"labels(first: 100)"`
 			}
-		} `graphql:"issues(first: 100)"`
-	} `graphql:"repository(owner: \"brejoc\", name: \"test\")"`
+		} `graphql:"issues(first: 100, after: $startCursor)"`
+	} `graphql:"repository(owner: $owner, name: $repo)"`
 }
 
 // FetchAllIssues fetches all of the issues from Github and returns
 // a pointer to the query struct.
-func FetchAllIssues() *Query {
-	query := Query{}
+func FetchAllIssues(config *Config) *QueryPages {
+	queryPages := QueryPages{}
+
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
-
 	client := githubv4.NewClient(httpClient)
-	err := client.Query(context.Background(), &query, nil)
-	if err != nil {
-		log.Fatal(err)
+
+	variables := map[string]interface{}{
+		"startCursor": (*githubv4.String)(nil),
+		"owner":       githubv4.String(config.Owner),
+		"repo":        githubv4.String(config.Repo),
 	}
 
-	log.Debug("resultCount:", query.Repository.Issues.TotalCount)
-	log.Debug("      nodes:", query.Repository.Issues.Nodes)
-	log.Debug(" Issue size:", len(query.Repository.Issues.Nodes))
-	for _, issue := range query.Repository.Issues.Nodes {
-		log.Debug("====================================")
-		log.Debug("        title:", issue.Title)
-		log.Debug("    createdAt:", issue.CreatedAt)
-		log.Debug("          URL:", issue.Url)
-		log.Debug("       Labels:")
-		for _, label := range issue.Labels.Nodes {
-			log.Debug("              ", label.Name)
+	pageCount := 0
+	for {
+		pageCount++
+		log.Debug("Fetching page: ", pageCount)
+		query := Query{}
+		err := client.Query(context.Background(), &query, variables)
+		if err != nil {
+			log.Fatal(err)
 		}
 
-		for _, ghColumn := range issue.ProjectCards.Nodes {
-			log.Debug("       Column:", ghColumn.Column.Name)
+		log.Debug("resultCount:", query.Repository.Issues.TotalCount)
+		log.Debug("      nodes:", query.Repository.Issues.Nodes)
+		log.Debug(" Issue size:", len(query.Repository.Issues.Nodes))
+		for _, issue := range query.Repository.Issues.Nodes {
+			log.Debug("====================================")
+			log.Debug("        title:", issue.Title)
+			log.Debug("    createdAt:", issue.CreatedAt)
+			log.Debug("          URL:", issue.Url)
+			log.Debug("       Labels:")
+			for _, label := range issue.Labels.Nodes {
+				log.Debug("              ", label.Name)
+			}
+
+			for _, ghColumn := range issue.ProjectCards.Nodes {
+				log.Debug("       Column:", ghColumn.Column.Name)
+			}
 		}
+		queryPages.Queries = append(queryPages.Queries, query)
+		if query.Repository.Issues.PageInfo.HasNextPage == true {
+			variables["startCursor"] = githubv4.NewString(query.Repository.Issues.PageInfo.EndCursor)
+			continue
+		}
+		return &queryPages
 	}
-	return &query
 }

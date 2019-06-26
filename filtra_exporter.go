@@ -16,6 +16,14 @@ const (
 )
 
 var debugFlag = flag.Bool("debug", false, "Sets log level to debug.")
+var ownerFlag = flag.String("owner", "brejoc", "Defines owner of repository")
+var repoFlag = flag.String("repo", "test", "Defines repository name")
+
+// Config parameters for the request
+type Config struct {
+	Owner string
+	Repo  string
+}
 
 //Define the metrics
 var ghAllIssues = prometheus.NewGauge(prometheus.GaugeOpts{
@@ -58,65 +66,68 @@ func init() {
 	prometheus.MustRegister(ghCycleTime)
 }
 
-func updatePrometheusMetrics(results *Query) {
-	// All issues
-	ghAllIssues.Set(float64(results.Repository.Issues.TotalCount))
-
-	// Closed and open issues
+func updatePrometheusMetrics(results *QueryPages) {
+	allIssuesCounter := 0
 	closedIssueCounter := 0
 	openIssueCounter := 0
 	openBugsCounter := 0
 	openL3Counter := 0
 	blockedIssueCounter := 0
-	for _, issue := range results.Repository.Issues.Nodes {
-		if issue.State == "CLOSED" {
-			closedIssueCounter++
-		} else if issue.State == "OPEN" {
-			openIssueCounter++
-		}
-		// looking for bug or L3 labels
-		for _, label := range issue.Labels.Nodes {
-			labelName := strings.ToLower(string(label.Name))
-			if labelName == "l3" && issue.State == "OPEN" {
-				openL3Counter++
-				break
-			} else if labelName == "bugs" && issue.State == "OPEN" {
-				openBugsCounter++
-				break
-			}
-		}
-		// looking for blocked label
-		for _, column := range issue.ProjectCards.Nodes {
-			columnName := strings.ToLower(string(column.Column.Name))
-			if columnName == "blocked" {
-				blockedIssueCounter++
-				break
-			}
-		}
 
+	for _, result := range results.Queries {
+		// All issues
+		allIssuesCounter += len(result.Repository.Issues.Nodes)
+
+		// Closed and open issues
+		for _, issue := range result.Repository.Issues.Nodes {
+			if issue.State == "CLOSED" {
+				closedIssueCounter++
+			} else if issue.State == "OPEN" {
+				openIssueCounter++
+			}
+			// looking for bug or L3 labels
+			for _, label := range issue.Labels.Nodes {
+				labelName := strings.ToLower(string(label.Name))
+				if labelName == "l3" && issue.State == "OPEN" {
+					openL3Counter++
+					break
+				} else if labelName == "bugs" && issue.State == "OPEN" {
+					openBugsCounter++
+					break
+				}
+			}
+			// looking for blocked label
+			for _, column := range issue.ProjectCards.Nodes {
+				columnName := strings.ToLower(string(column.Column.Name))
+				if columnName == "blocked" {
+					blockedIssueCounter++
+					break
+				}
+			}
+		}
 	}
 
 	// Calculate lead and cyle times
 	var leadTimes []time.Duration
-	var averageLeadTime float64
-	for _, issue := range results.Repository.Issues.Nodes {
-		//TODO: Calculate cycle time
-		if issue.State == "CLOSED" {
-			leadTime := issue.ClosedAt.Sub(issue.CreatedAt.Time)
-			leadTimes = append(leadTimes, leadTime)
+	var sumLeadTimes time.Duration
+	for _, result := range results.Queries {
+		for _, issue := range result.Repository.Issues.Nodes {
+			//TODO: Calculate cycle time
+			if issue.State == "CLOSED" {
+				leadTime := issue.ClosedAt.Sub(issue.CreatedAt.Time)
+				leadTimes = append(leadTimes, leadTime)
+			}
 		}
-		// calculate average of lead times
-		var sumLeadTimes time.Duration
-		for _, leadTime := range leadTimes {
-			sumLeadTimes += leadTime
-		}
-		averageLeadTime = float64(sumLeadTimes.Hours()/24) / float64(len(leadTimes))
-
-		// TODO: Calculate cycle times
 	}
+	// calculate average of lead times
+	for _, leadTime := range leadTimes {
+		sumLeadTimes += leadTime
+	}
+	averageLeadTime := float64(sumLeadTimes.Hours()/24) / float64(closedIssueCounter)
 
 	//TODO: get in progress issues
 
+	ghAllIssues.Set(float64(allIssuesCounter))
 	ghOpenIssues.Set(float64(openIssueCounter))
 	ghClosedIssues.Set(float64(closedIssueCounter))
 	ghOpenBugs.Set(float64(openBugsCounter))
@@ -132,13 +143,19 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	config := Config{
+		Owner: *ownerFlag,
+		Repo:  *repoFlag,
+	}
+
 	// Start go routine that updates values continously in the background
 	go func() {
 		for {
 			log.Info("Updating metrics from Github: %", time.Now())
-			updatePrometheusMetrics(FetchAllIssues())
+			updatePrometheusMetrics(FetchAllIssues(&config))
 			// Sleeping for some time, so that we don't update constantly
 			// and run into the request limit of Github.
+			log.Info("Update finished: %", time.Now())
 			time.Sleep(time.Duration(updateInterval * time.Second))
 		}
 	}()
