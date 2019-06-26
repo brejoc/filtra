@@ -1,0 +1,8 @@
+global:
+    scrape_interval: 60s
+    external_labels:
+        monitor: 'Kanban'
+scrape_configs:
+    - job_name: 'github'
+      target_groups:
+          - targets: ['filtra-exporter:8080']
