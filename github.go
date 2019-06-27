@@ -27,11 +27,24 @@ type Query struct {
 				HasNextPage bool
 			}
 			Nodes []struct {
-				CreatedAt    githubv4.DateTime
-				ClosedAt     githubv4.DateTime
-				Title        githubv4.String
-				Url          githubv4.URI
-				State        githubv4.StatusState
+				CreatedAt     githubv4.DateTime
+				ClosedAt      githubv4.DateTime
+				Title         githubv4.String
+				Url           githubv4.URI
+				State         githubv4.StatusState
+				TimelineItems struct {
+					Nodes []struct {
+						Typename   string `graphql:"__typename"`
+						AddedEvent struct {
+							CreatedAt githubv4.DateTime
+						} `graphql:"...on AddedToProjectEvent"`
+						MovedEvent struct {
+							PreviousProjectColumnName githubv4.String
+							ProjectColumnName         githubv4.String
+							CreatedAt                 githubv4.DateTime
+						} `graphql:"...on MovedColumnsInProjectEvent"`
+					}
+				} `graphql:"timelineItems(itemTypes: [ADDED_TO_PROJECT_EVENT, MOVED_COLUMNS_IN_PROJECT_EVENT], first: 100)"`
 				ProjectCards struct {
 					Nodes []struct {
 						Column struct {
