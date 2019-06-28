@@ -15,7 +15,7 @@ services:
     build: .
     environment:
       - GITHUB_TOKEN=$GITHUB_TOKEN
-    command: "-owner brejoc -repo test -debug"
+    command: "-debug"
     ports:
         - '8080:8080'
 
