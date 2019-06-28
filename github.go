@@ -6,7 +6,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/shurcooL/githubv4"
+	"github.com/brejoc/githubv4"
 	"golang.org/x/oauth2"
 )
 
