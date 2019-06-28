@@ -33,6 +33,11 @@ type Query struct {
 				Url           githubv4.URI
 				State         githubv4.StatusState
 				TimelineItems struct {
+					PageInfo struct {
+						StartCursor githubv4.String
+						EndCursor   githubv4.String
+						HasNextPage bool
+					}
 					Nodes []struct {
 						Typename   string `graphql:"__typename"`
 						AddedEvent struct {
@@ -44,7 +49,7 @@ type Query struct {
 							CreatedAt                 githubv4.DateTime
 						} `graphql:"...on MovedColumnsInProjectEvent"`
 					}
-				} `graphql:"timelineItems(itemTypes: [ADDED_TO_PROJECT_EVENT, MOVED_COLUMNS_IN_PROJECT_EVENT], first: 100)"`
+				} `graphql:"timelineItems(itemTypes: [ADDED_TO_PROJECT_EVENT, MOVED_COLUMNS_IN_PROJECT_EVENT], first: 250)"`
 				ProjectCards struct {
 					Nodes []struct {
 						Column struct {
