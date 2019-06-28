@@ -110,8 +110,11 @@ func updatePrometheusMetrics(results *QueryPages) {
 				leadTimes = append(leadTimes, leadTime)
 
 				// get and append cycle time of issue
-				cycleTime := calculateCycleTime(issue.TimelineItems)
-				cycleTimes = append(cycleTimes, cycleTime)
+				// TODO: Maybe it would be better to pass the whole issue here.
+				cycleTime := calculateCycleTime(issue.TimelineItems, issue.CreatedAt)
+				if cycleTime != time.Duration(0*time.Second) {
+					cycleTimes = append(cycleTimes, cycleTime)
+				}
 			}
 		}
 	}
@@ -125,7 +128,7 @@ func updatePrometheusMetrics(results *QueryPages) {
 	for _, cycleTime := range cycleTimes {
 		sumCycleTimes += cycleTime
 	}
-	averageCycleTime := float64(sumCycleTimes.Hours()/24) / float64(closedIssueCounter)
+	averageCycleTime := float64(sumCycleTimes.Hours()/24) / float64(len(cycleTimes))
 
 	//TODO: get in progress issues
 

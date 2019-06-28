@@ -1,9 +1,9 @@
 package main
 
 import (
+	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/brejoc/githubv4"
 )
 
@@ -18,19 +18,19 @@ func calculateWipTime() {
 }
 
 // Calculates the cycle time of an issue.
-func calculateCycleTime(timelineItems queryTimelineItems) time.Duration {
-	//TODO: Implement me
+func calculateCycleTime(timelineItems queryTimelineItems, issueClosedAt githubv4.DateTime) time.Duration {
 	for _, event := range timelineItems.Nodes {
-		log.Info("==============")
 		if event.Typename == "MovedColumnsInProjectEvent" {
-			log.Info("name    : ", event.Typename)
-			log.Info("node    : ", event.MovedEvent.CreatedAt)
-			log.Info("from    : ", event.MovedEvent.PreviousProjectColumnName)
-			log.Info("to      : ", event.MovedEvent.ProjectColumnName)
-			log.Info("project : ", event.MovedEvent.Project.Name)
+			if strings.ToLower(string(event.MovedEvent.Project.Name)) == strings.ToLower(config.Board.Name) {
+				previousColumn := strings.ToLower(string(event.MovedEvent.PreviousProjectColumnName))
+				if previousColumn == strings.ToLower(config.Board.Planned) {
+					return event.MovedEvent.CreatedAt.Sub(issueClosedAt.Time)
+				}
+			}
 		}
 	}
-	return time.Now().Sub(time.Now())
+	// If an issue was handled correctly, this shouldn't happen. But we have to reaturn anything nevertheless.
+	return time.Duration(0 * time.Second)
 }
 
 // Calculates the lead time of an issue.
