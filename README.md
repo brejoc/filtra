@@ -5,7 +5,7 @@ Filtra aims to extract information like lead and cycle times from Github repos f
 
 # The Architecture
 
-In its core Filtra is a Prometheus exporter that fetches all of the issues from a Github repository and provides the gathered and enriched (lead and cycle times) as metrics. Those metrics are then scraped by Prometheus and visualized with Grafana.
+In its core Filtra is a Prometheus exporter that fetches all of the issues from a Github repository and provides the gathered and enriched (lead and cycle times) data as metrics. Those metrics are then scraped by Prometheus and visualized with Grafana.
 
 ## Work In Progress
 
