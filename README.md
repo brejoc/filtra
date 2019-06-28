@@ -11,6 +11,15 @@ In its core Filtra is a Prometheus exporter that fetches all of the issues from 
 
 The prometheus exporter is mostly done. Only the average cycle time calculation is still missing. Prometheus knows where to fetch the Metrics, but Grafana is not yet automagically showing any graphs. If you know how to make this happen, please ping me or open a pull request.
 
+# Hacking on Filtra
+
+1. Fetching the dependencies: `go get -d -v .`
+2. Running Filtra: `go run .`
+3. Access the metrics: `http://localhost:8080/metrics`
+
+All of the metrics we are interested in start with `gh_`.
+
+
 # Deployment
 
 You can use Docker Compose to get Filtra running. But please check the `docker-compose.yml` first. You'll have to provide the owner and repo name in the `command`. Just replace `brejoc` and `test` with somthing more relevant. And you should also have you Github token exported as the environment varible `$GITHUB_TOKEN`. But of course you can also paste it into the `docker-compose.yml`.
