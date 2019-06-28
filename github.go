@@ -79,7 +79,7 @@ type Query struct {
 
 // FetchAllIssues fetches all of the issues from Github and returns
 // a pointer to the query struct.
-func FetchAllIssues(config *Config) *QueryPages {
+func FetchAllIssues() *QueryPages {
 	queryPages := QueryPages{}
 
 	src := oauth2.StaticTokenSource(
@@ -90,8 +90,8 @@ func FetchAllIssues(config *Config) *QueryPages {
 
 	variables := map[string]interface{}{
 		"startCursor": (*githubv4.String)(nil),
-		"owner":       githubv4.String(config.Owner),
-		"repo":        githubv4.String(config.Repo),
+		"owner":       githubv4.String(config.Repository.Owner),
+		"repo":        githubv4.String(config.Repository.Name),
 	}
 
 	pageCount := 0

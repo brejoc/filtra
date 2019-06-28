@@ -11,19 +11,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-const (
-	updateInterval = 3600 // in seconds
-)
-
 var debugFlag = flag.Bool("debug", false, "Sets log level to debug.")
 var ownerFlag = flag.String("owner", "brejoc", "Defines owner of repository")
 var repoFlag = flag.String("repo", "test", "Defines repository name")
-
-// Config parameters for the request
-type Config struct {
-	Owner string
-	Repo  string
-}
 
 //Define the metrics
 var ghAllIssues = prometheus.NewGauge(prometheus.GaugeOpts{
@@ -156,20 +146,17 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	config := Config{
-		Owner: *ownerFlag,
-		Repo:  *repoFlag,
-	}
-
 	// Start go routine that updates values continously in the background
 	go func() {
 		for {
 			log.Info("Updating metrics from Github: %", time.Now())
-			updatePrometheusMetrics(FetchAllIssues(&config))
+			updatePrometheusMetrics(FetchAllIssues())
+
 			// Sleeping for some time, so that we don't update constantly
 			// and run into the request limit of Github.
 			log.Info("Update finished: %", time.Now())
-			time.Sleep(time.Duration(updateInterval * time.Second))
+			log.Debug("Update interval: %", config.Repository.UpdateInterval)
+			time.Sleep(time.Duration(config.Repository.UpdateInterval) * time.Second)
 		}
 	}()
 

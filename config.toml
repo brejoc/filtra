@@ -1,0 +1,9 @@
+[repository]
+owner = "brejoc"
+name = "test"
+updateInterval = 3600
+
+[board]
+name = "test"
+planned = "Planned"
+blocked = "Blocked"
