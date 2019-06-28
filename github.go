@@ -15,6 +15,33 @@ type QueryPages struct {
 	Queries []Query
 }
 
+type (
+	queryTimelineItems struct {
+		PageInfo struct {
+			StartCursor githubv4.String
+			EndCursor   githubv4.String
+			HasNextPage bool
+		}
+		Nodes []struct {
+			Typename   string `graphql:"__typename"`
+			AddedEvent struct {
+				Project struct {
+					Name githubv4.String
+				}
+				CreatedAt githubv4.DateTime
+			} `graphql:"...on AddedToProjectEvent"`
+			MovedEvent struct {
+				Project struct {
+					Name githubv4.String
+				}
+				PreviousProjectColumnName githubv4.String
+				ProjectColumnName         githubv4.String
+				CreatedAt                 githubv4.DateTime
+			} `graphql:"...on MovedColumnsInProjectEvent"`
+		}
+	}
+)
+
 // Query is used to perform the Graphql query and also
 // holds the results afterwards.
 type Query struct {
@@ -32,25 +59,8 @@ type Query struct {
 				Title         githubv4.String
 				Url           githubv4.URI
 				State         githubv4.StatusState
-				TimelineItems struct {
-					PageInfo struct {
-						StartCursor githubv4.String
-						EndCursor   githubv4.String
-						HasNextPage bool
-					}
-					Nodes []struct {
-						Typename   string `graphql:"__typename"`
-						AddedEvent struct {
-							CreatedAt githubv4.DateTime
-						} `graphql:"...on AddedToProjectEvent"`
-						MovedEvent struct {
-							PreviousProjectColumnName githubv4.String
-							ProjectColumnName         githubv4.String
-							CreatedAt                 githubv4.DateTime
-						} `graphql:"...on MovedColumnsInProjectEvent"`
-					}
-				} `graphql:"timelineItems(itemTypes: [ADDED_TO_PROJECT_EVENT, MOVED_COLUMNS_IN_PROJECT_EVENT], first: 250)"`
-				ProjectCards struct {
+				TimelineItems queryTimelineItems `graphql:"timelineItems(itemTypes: [ADDED_TO_PROJECT_EVENT, MOVED_COLUMNS_IN_PROJECT_EVENT], first: 250)"`
+				ProjectCards  struct {
 					Nodes []struct {
 						Column struct {
 							Name githubv4.String

@@ -107,23 +107,35 @@ func updatePrometheusMetrics(results *QueryPages) {
 		}
 	}
 
-	// Calculate lead and cyle times
+	// Calculate average lead and cycle times
 	var leadTimes []time.Duration
 	var sumLeadTimes time.Duration
+	var cycleTimes []time.Duration
+	var sumCycleTimes time.Duration
 	for _, result := range results.Queries {
 		for _, issue := range result.Repository.Issues.Nodes {
-			//TODO: Calculate cycle time
 			if issue.State == "CLOSED" {
-				leadTime := issue.ClosedAt.Sub(issue.CreatedAt.Time)
+				// get and append lead time of issue
+				leadTime := calculateLeadTime(issue.CreatedAt, issue.ClosedAt)
 				leadTimes = append(leadTimes, leadTime)
+
+				// get and append cycle time of issue
+				cycleTime := calculateCycleTime(issue.TimelineItems)
+				cycleTimes = append(cycleTimes, cycleTime)
 			}
 		}
 	}
-	// calculate average of lead times
+	// Calculate average of lead times
 	for _, leadTime := range leadTimes {
 		sumLeadTimes += leadTime
 	}
 	averageLeadTime := float64(sumLeadTimes.Hours()/24) / float64(closedIssueCounter)
+
+	// Calculate average of cycle time
+	for _, cycleTime := range cycleTimes {
+		sumCycleTimes += cycleTime
+	}
+	averageCycleTime := float64(sumCycleTimes.Hours()/24) / float64(closedIssueCounter)
 
 	//TODO: get in progress issues
 
@@ -134,6 +146,7 @@ func updatePrometheusMetrics(results *QueryPages) {
 	ghOpenL3Issues.Set(float64(openL3Counter))
 	ghBlockedIssues.Set(float64(blockedIssueCounter))
 	ghLeadTime.Set(averageLeadTime)
+	ghCycleTime.Set(averageCycleTime)
 }
 
 func main() {
