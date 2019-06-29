@@ -21,11 +21,11 @@ To get the most out of Filtra, a baseline needs to be established.
 
 Currently the planned and blocked column can be set in the [config file](https://github.com/brejoc/filtra/blob/master/config.toml).
 
-The lables for bugs and support issues will also soon be configurable.
+The labels for bugs and support issues will also soon be configurable.
 
 ## Work In Progress
 
-The prometheus exporter is mostly done. Prometheus knows where to fetch the Metrics, but Grafana is not yet automagically showing any graphs. If you know how to make this happen, please ping me or open a pull request.
+The prometheus exporter is mostly done. Some metrics tweaking is still needed and additional metrics could also be gathered. Prometheus knows where to fetch the Metrics, but Grafana is not yet automagically showing any graphs. If you know how to make this happen, please ping me or open a pull request.
 
 If you've got ideas or want ot see additional features or metrics, head over to the [issues](https://github.com/brejoc/filtra/issues).
 
