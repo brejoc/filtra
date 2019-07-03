@@ -63,7 +63,10 @@ type Query struct {
 				ProjectCards  struct {
 					Nodes []struct {
 						Column struct {
-							Name githubv4.String
+							Name    githubv4.String
+							Project struct {
+								Name githubv4.String
+							}
 						}
 					}
 				} `graphql:"projectCards"`

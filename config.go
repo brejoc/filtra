@@ -20,9 +20,11 @@ type repository struct {
 }
 
 type board struct {
-	Name    string
-	Planned string
-	Blocked string
+	Name          string
+	Planned       string
+	Blocked       string
+	BugLabels     []string
+	SupportLabels []string
 }
 
 // A global config variable

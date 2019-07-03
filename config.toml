@@ -7,3 +7,5 @@ updateInterval = 3600
 name = "test"
 planned = "Planned"
 blocked = "Blocked"
+bugLabels = ["bug"]
+supportLabels = ["L3", "L3 question"]

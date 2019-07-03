@@ -22,6 +22,9 @@ var ghAllIssues = prometheus.NewGauge(prometheus.GaugeOpts{
 var ghOpenIssues = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "gh_open_issues", Help: "Open issues"})
 
+var ghPlannedIssues = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "gh_planned_issues", Help: "Issues that are planned but not yet taken."})
+
 var ghInProgress = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "gh_in_progress", Help: "Issues that are currently in progress"})
 
@@ -48,6 +51,7 @@ func init() {
 	prometheus.MustRegister(ghAllIssues)
 	prometheus.MustRegister(ghOpenIssues)
 	prometheus.MustRegister(ghInProgress)
+	prometheus.MustRegister(ghPlannedIssues)
 	prometheus.MustRegister(ghBlockedIssues)
 	prometheus.MustRegister(ghClosedIssues)
 	prometheus.MustRegister(ghOpenL3Issues)
@@ -63,6 +67,7 @@ func updatePrometheusMetrics(results *QueryPages) {
 	openBugsCounter := 0
 	openL3Counter := 0
 	blockedIssueCounter := 0
+	plannedIssueCounter := 0
 
 	for _, result := range results.Queries {
 		// All issues
@@ -74,24 +79,48 @@ func updatePrometheusMetrics(results *QueryPages) {
 				closedIssueCounter++
 			} else if issue.State == "OPEN" {
 				openIssueCounter++
-			}
-			// looking for bug or L3 labels
-			for _, label := range issue.Labels.Nodes {
-				labelName := strings.ToLower(string(label.Name))
-				if labelName == "l3" && issue.State == "OPEN" {
-					openL3Counter++
-					break
-				} else if labelName == "bugs" && issue.State == "OPEN" {
-					openBugsCounter++
-					break
+				for _, label := range issue.Labels.Nodes {
+					labelName := strings.ToLower(string(label.Name))
+					// Issues can only be counted, when they are on the right board. we have to
+					// check this by iterating over the columns.
+					for _, column := range issue.ProjectCards.Nodes {
+						boardName := strings.ToLower(string(column.Column.Project.Name))
+						if boardName == strings.ToLower(config.Board.Name) {
+							// Is it a bug?
+							for _, bugLabel := range config.Board.BugLabels {
+								if labelName == strings.ToLower(bugLabel) {
+									openBugsCounter++
+									break
+								}
+							}
+							// Is it a support issue?
+							for _, supportLabel := range config.Board.SupportLabels {
+								if labelName == strings.ToLower(supportLabel) {
+									openL3Counter++
+									break
+								}
+							}
+							break // The issue can't be two times on the board, so we can break here.
+						}
+					}
+
 				}
 			}
-			// looking for blocked label
+			// There might be a closed issue in the columns… so we are doing this
+			// for all of the issues and not only for the open ones.
+			//
+			// Looking for issues in blocked and planned columns.
 			for _, column := range issue.ProjectCards.Nodes {
+				boardName := strings.ToLower(string(column.Column.Project.Name))
 				columnName := strings.ToLower(string(column.Column.Name))
-				if columnName == "blocked" {
-					blockedIssueCounter++
-					break
+				if boardName == strings.ToLower(config.Board.Name) {
+					if columnName == strings.ToLower(config.Board.Blocked) {
+						blockedIssueCounter++
+						break
+					} else if columnName == strings.ToLower(config.Board.Planned) {
+						plannedIssueCounter++
+						break
+					}
 				}
 			}
 		}
@@ -134,6 +163,7 @@ func updatePrometheusMetrics(results *QueryPages) {
 
 	ghAllIssues.Set(float64(allIssuesCounter))
 	ghOpenIssues.Set(float64(openIssueCounter))
+	ghPlannedIssues.Set(float64(plannedIssueCounter))
 	ghClosedIssues.Set(float64(closedIssueCounter))
 	ghOpenBugs.Set(float64(openBugsCounter))
 	ghOpenL3Issues.Set(float64(openL3Counter))
