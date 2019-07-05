@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 )
@@ -20,11 +18,11 @@ type repository struct {
 }
 
 type board struct {
-	Name          string
-	Planned       string
-	Blocked       string
-	BugLabels     []string
-	SupportLabels []string
+	Name           string
+	PlannedColumns []string
+	BlockedColumns []string
+	BugLabels      []string
+	SupportLabels  []string
 }
 
 // A global config variable
@@ -34,5 +32,5 @@ func init() {
 	if _, err := toml.DecodeFile("./config.toml", &config); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%#v\n", config)
+	log.Debug("%#v\n", config)
 }

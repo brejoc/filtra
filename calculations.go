@@ -23,7 +23,9 @@ func calculateCycleTime(timelineItems queryTimelineItems, issueClosedAt githubv4
 		if event.Typename == "MovedColumnsInProjectEvent" {
 			if strings.ToLower(string(event.MovedEvent.Project.Name)) == strings.ToLower(config.Board.Name) {
 				previousColumn := strings.ToLower(string(event.MovedEvent.PreviousProjectColumnName))
-				if previousColumn == strings.ToLower(config.Board.Planned) {
+				targetColumn := strings.ToLower(string(event.MovedEvent.ProjectColumnName))
+				// We only need to calculate if the target column is not also a planned column.
+				if isColumnInColumSlice(previousColumn, config.Board.PlannedColumns) && !isColumnInColumSlice(targetColumn, config.Board.PlannedColumns) {
 					return event.MovedEvent.CreatedAt.Sub(issueClosedAt.Time)
 				}
 			}
@@ -36,4 +38,14 @@ func calculateCycleTime(timelineItems queryTimelineItems, issueClosedAt githubv4
 // Calculates the lead time of an issue.
 func calculateLeadTime(createdAt githubv4.DateTime, closedAt githubv4.DateTime) time.Duration {
 	return closedAt.Sub(createdAt.Time)
+}
+
+// isColumenInColumnSlice checks if a column is in a slice of columns. Cases are ignored.
+func isColumnInColumSlice(column string, list []string) bool {
+	for _, sliceColumn := range list {
+		if strings.ToLower(sliceColumn) == strings.ToLower(column) {
+			return true
+		}
+	}
+	return false
 }

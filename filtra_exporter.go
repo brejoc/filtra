@@ -114,12 +114,10 @@ func updatePrometheusMetrics(results *QueryPages) {
 				boardName := strings.ToLower(string(column.Column.Project.Name))
 				columnName := strings.ToLower(string(column.Column.Name))
 				if boardName == strings.ToLower(config.Board.Name) {
-					if columnName == strings.ToLower(config.Board.Blocked) {
+					if isColumnInColumSlice(columnName, config.Board.BlockedColumns) {
 						blockedIssueCounter++
-						break
-					} else if columnName == strings.ToLower(config.Board.Planned) {
+					} else if isColumnInColumSlice(columnName, config.Board.PlannedColumns) {
 						plannedIssueCounter++
-						break
 					}
 				}
 			}
