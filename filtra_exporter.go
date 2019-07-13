@@ -180,13 +180,13 @@ func main() {
 	// Start go routine that updates values continously in the background
 	go func() {
 		for {
-			log.Info("Updating metrics from Github: %", time.Now())
+			log.Infof("Updating metrics from Github: %s", time.Now())
 			updatePrometheusMetrics(FetchAllIssues())
 
 			// Sleeping for some time, so that we don't update constantly
 			// and run into the request limit of Github.
-			log.Info("Update finished: %", time.Now())
-			log.Debug("Update interval: %", config.Repository.UpdateInterval)
+			log.Infof("Update finished: %s", time.Now())
+			log.Debugf("Update interval: %d", config.Repository.UpdateInterval)
 			time.Sleep(time.Duration(config.Repository.UpdateInterval) * time.Second)
 		}
 	}()
