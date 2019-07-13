@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/brejoc/githubv4"
 	"golang.org/x/oauth2"
