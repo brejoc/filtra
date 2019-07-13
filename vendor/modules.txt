@@ -8,6 +8,8 @@ github.com/brejoc/githubv4
 github.com/brejoc/graphql
 github.com/brejoc/graphql/ident
 github.com/brejoc/graphql/internal/jsonutil
+# github.com/coreos/go-systemd v0.0.0-20190620071333-e64a0ec8b42a
+github.com/coreos/go-systemd/daemon
 # github.com/golang/protobuf v1.3.1
 github.com/golang/protobuf/proto
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1

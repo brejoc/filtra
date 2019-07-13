@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coreos/go-systemd/daemon"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
@@ -177,11 +178,21 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	// This is used to send systemd readiness notification
+	readyToServe := false
+
 	// Start go routine that updates values continously in the background
 	go func() {
 		for {
 			log.Info("Updating metrics from Github: %", time.Now())
 			updatePrometheusMetrics(FetchAllIssues())
+
+			// Sending readiness notication to systemd
+			if !readyToServe {
+				readyToServe = true
+				log.Debug("Sending systemd notification: READY=1")
+				daemon.SdNotify(false, "READY=1")
+			}
 
 			// Sleeping for some time, so that we don't update constantly
 			// and run into the request limit of Github.
@@ -191,8 +202,30 @@ func main() {
 		}
 	}()
 
+	// Start Go routine for systemd watchdog
+	go func() {
+		interval, err := daemon.SdWatchdogEnabled(false)
+		if err != nil || interval == 0 {
+			log.Debug("systemd watchdog not enabled")
+			return
+		}
+		for {
+			_, err := http.Get("http://127.0.0.1:8080")
+			if err == nil {
+				log.Debug("Sending systemd notification: WATCHDOG=1")
+				daemon.SdNotify(false, "WATCHDOG=1")
+			} else {
+				log.Error("Liveness check failed. Not sending notification for systemd watchdog")
+			}
+			time.Sleep(interval / 3)
+		}
+	}()
+
 	// Start the websever
 	http.Handle("/metrics", promhttp.Handler())
 	log.Info("Beginning to serve on port :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		log.Panic(err)
+	}
 }
