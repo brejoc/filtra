@@ -31,6 +31,8 @@ If you've got ideas or want ot see additional features or metrics, head over to 
 
 # Hacking on Filtra
 
+Step 1 is only is only needed for >= Go 1.10. With Go Modules dependencies are vendorized.
+
 1. Fetching the dependencies: `go get -d -v .`
 2. Running Filtra: `go run *.go`
 3. Access the metrics: `http://localhost:8080/metrics`
