@@ -10,6 +10,8 @@ github.com/brejoc/githubv4 v0.0.0-20190628081146-ff7a0d1c9aa4 h1:iVjQgCwcxfMxkeq
 github.com/brejoc/githubv4 v0.0.0-20190628081146-ff7a0d1c9aa4/go.mod h1:uGE3ZVEmsyK+I6jG0Zveu92rP5FRoggAErP/uYm0jCA=
 github.com/brejoc/graphql v0.0.0-20190628081354-06d07f6a803c h1:tVKvtFD4lhxGQ8er8G48V1SZBN5pncPFq2gppY1NHGo=
 github.com/brejoc/graphql v0.0.0-20190628081354-06d07f6a803c/go.mod h1:1suXv94t50OvWZJZNiVJEc3uCE3TmMo0RpE2Z8qLo+4=
+github.com/coreos/go-systemd v0.0.0-20190620071333-e64a0ec8b42a h1:W8b4lQ4tFF21aspRGoBuCNV6V2fFJBF+pm1J6OY8Lys=
+github.com/coreos/go-systemd v0.0.0-20190620071333-e64a0ec8b42a/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
