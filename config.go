@@ -8,7 +8,7 @@ import (
 // Config stores the values read from the TOML config
 type Config struct {
 	Repository repository
-	Board      board
+	Boards     map[string]board
 }
 
 type repository struct {
@@ -23,6 +23,10 @@ type board struct {
 	BlockedColumns []string
 	BugLabels      []string
 	SupportLabels  []string
+}
+
+type boards struct {
+	Boards []board
 }
 
 // A global config variable
