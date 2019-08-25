@@ -60,19 +60,22 @@ func updatePrometheusMetrics(results *QueryPages) {
 		// All issues
 		allIssuesCounter += len(result.Repository.Issues.Nodes)
 
+		// Closed and open issues
+		for _, issue := range result.Repository.Issues.Nodes {
+			if issue.State == "CLOSED" {
+				closedIssueCounter++
+			} else if issue.State == "OPEN" {
+				openIssueCounter++
+			}
+		}
 		for _, board := range config.Boards {
 			// These counter are board specific
 			blockedIssueCounter := 0
 			plannedIssueCounter := 0
 			openBugsCounter := 0
 			openL3Counter := 0
-
-			// Closed and open issues
 			for _, issue := range result.Repository.Issues.Nodes {
-				if issue.State == "CLOSED" {
-					closedIssueCounter++
-				} else if issue.State == "OPEN" {
-					openIssueCounter++
+				if issue.State == "OPEN" {
 					for _, label := range issue.Labels.Nodes {
 						labelName := strings.ToLower(string(label.Name))
 						// Issues can only be counted, when they are on the right board. we have to
