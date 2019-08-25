@@ -61,7 +61,6 @@ func updatePrometheusMetrics(results *QueryPages) {
 		allIssuesCounter += len(result.Repository.Issues.Nodes)
 
 		for _, board := range config.Boards {
-			log.Error("===========>", board, "<=============")
 			// These counter are board specific
 			blockedIssueCounter := 0
 			plannedIssueCounter := 0
