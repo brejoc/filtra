@@ -14,7 +14,7 @@ type Config struct {
 type repository struct {
 	Owner          string
 	Name           string
-	UpdateInterval int64
+	UpdateInterval uint64
 }
 
 type board struct {
