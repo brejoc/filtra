@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jasonlvhit/gocron"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
@@ -170,6 +171,13 @@ func updatePrometheusMetrics(results *QueryPages) {
 	ghCycleTime.Set(averageCycleTime)
 }
 
+func updateLoop() {
+	log.Infof("Updating metrics from Github: %s", time.Now())
+	updatePrometheusMetrics(FetchAllIssues())
+	log.Infof("Update finished: %s", time.Now())
+	log.Debugf("Update interval: %d", config.Repository.UpdateInterval)
+}
+
 func main() {
 	// Setting loggger to debug level when debug flag was set.
 	flag.Parse()
@@ -177,18 +185,16 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	// Start go routine that updates values continously in the background
-	go func() {
-		for {
-			log.Infof("Updating metrics from Github: %s", time.Now())
-			updatePrometheusMetrics(FetchAllIssues())
+	updateInterval := uint64(config.Repository.UpdateInterval)
+	if updateInterval <= 0 {
+		updateInterval = 30
+	}
 
-			// Sleeping for some time, so that we don't update constantly
-			// and run into the request limit of Github.
-			log.Infof("Update finished: %s", time.Now())
-			log.Debugf("Update interval: %d", config.Repository.UpdateInterval)
-			time.Sleep(time.Duration(config.Repository.UpdateInterval) * time.Second)
-		}
+	go func() {
+		updateLoop()
+		// Start update loop
+		gocron.Every(updateInterval).Seconds().Do(updateLoop)
+		<-gocron.Start()
 	}()
 
 	// Start the websever

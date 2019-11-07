@@ -10,6 +10,8 @@ github.com/brejoc/graphql/ident
 github.com/brejoc/graphql/internal/jsonutil
 # github.com/golang/protobuf v1.3.1
 github.com/golang/protobuf/proto
+# github.com/jasonlvhit/gocron v0.0.0-20191106203602-f82992d443f4
+github.com/jasonlvhit/gocron
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
