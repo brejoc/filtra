@@ -32,5 +32,5 @@ func init() {
 	if _, err := toml.DecodeFile("./config.toml", &config); err != nil {
 		log.Fatal(err)
 	}
-	log.Debug("%#v\n", config)
+	log.Debugf("%#v\n", config)
 }
