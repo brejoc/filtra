@@ -2,66 +2,21 @@ package main
 
 import (
 	"flag"
-	"net/http"
 	"strings"
 	"time"
 
+	"database/sql"
 	"github.com/jasonlvhit/gocron"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	_ "github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
 )
 
 var debugFlag = flag.Bool("debug", false, "Sets log level to debug.")
 var ownerFlag = flag.String("owner", "brejoc", "Defines owner of repository")
 var repoFlag = flag.String("repo", "test", "Defines repository name")
+var db *sql.DB
 
-//Define the metrics
-var ghAllIssues = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "gh_all_issues", Help: "All issues"})
-
-var ghOpenIssues = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "gh_open_issues", Help: "Open issues"})
-
-var ghPlannedIssues = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "gh_planned_issues", Help: "Issues that are planned but not yet taken."})
-
-var ghInProgress = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "gh_in_progress", Help: "Issues that are currently in progress"})
-
-var ghBlockedIssues = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "gh_blocked_issues", Help: "Issues that are currently blocked or waiting for response"})
-
-var ghClosedIssues = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "gh_closed_issues", Help: "Closed issues"})
-
-var ghOpenL3Issues = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "gh_open_l3_issues", Help: "Open L3 issues"})
-
-var ghOpenBugs = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "gh_open_bug_issues", Help: "Open bugs"})
-
-var ghLeadTime = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "gh_lead_time", Help: "Average lead time of closed issues"})
-
-var ghCycleTime = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "gh_cycle_time", Help: "Average cycle time of closed issues"})
-
-func init() {
-	//Register metrics with prometheus
-	prometheus.MustRegister(ghAllIssues)
-	prometheus.MustRegister(ghOpenIssues)
-	prometheus.MustRegister(ghInProgress)
-	prometheus.MustRegister(ghPlannedIssues)
-	prometheus.MustRegister(ghBlockedIssues)
-	prometheus.MustRegister(ghClosedIssues)
-	prometheus.MustRegister(ghOpenL3Issues)
-	prometheus.MustRegister(ghOpenBugs)
-	prometheus.MustRegister(ghLeadTime)
-	prometheus.MustRegister(ghCycleTime)
-}
-
-func updatePrometheusMetrics(results *QueryPages) {
+func updateMetrics(results *QueryPages) {
 	allIssuesCounter := 0
 	closedIssueCounter := 0
 	openIssueCounter := 0
@@ -158,22 +113,51 @@ func updatePrometheusMetrics(results *QueryPages) {
 	}
 	averageCycleTime := float64(sumCycleTimes.Hours()/24) / float64(len(cycleTimes))
 
-	//TODO: get in progress issues
+	// Prepare to insert in DB
+	tx, _ := db.Begin()
+	// Aux func to insert map values into DB
+	mapToDb := func(stmt *sql.Stmt, m map[string]interface{}) {
+		timeNow := time.Now()
+		for k, v := range m {
+			_, err := stmt.Exec(timeNow, k, v)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
 
-	ghAllIssues.Set(float64(allIssuesCounter))
-	ghOpenIssues.Set(float64(openIssueCounter))
-	ghPlannedIssues.Set(float64(plannedIssueCounter))
-	ghClosedIssues.Set(float64(closedIssueCounter))
-	ghOpenBugs.Set(float64(openBugsCounter))
-	ghOpenL3Issues.Set(float64(openL3Counter))
-	ghBlockedIssues.Set(float64(blockedIssueCounter))
-	ghLeadTime.Set(averageLeadTime)
-	ghCycleTime.Set(averageCycleTime)
+	// Insert issue counters
+	issueMap := map[string]interface{}{
+		"ALL":         allIssuesCounter,
+		"BLOCKED":     blockedIssueCounter,
+		"CLOSED":      closedIssueCounter,
+		"OPEN_ISSUE":  openIssueCounter,
+		"OPEN_BUG":    openBugsCounter,
+		"OPEN_L3_BUG": openL3Counter,
+		"PLANNED":     plannedIssueCounter,
+		// TODO: get in progress issues
+	}
+	stmt, err := tx.Prepare(`insert into issue_counter(ts, type, value) values (?, ?, ?)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+	mapToDb(stmt, issueMap)
+
+	// Insert issue flows
+	flowMap := map[string]interface{}{
+		"LEAD_TIME":  averageLeadTime,
+		"CYCLE_TIME": averageCycleTime,
+	}
+	stmt, err = tx.Prepare(`insert into issue_flow(ts, type, value) values (?, ?, ?)`)
+	mapToDb(stmt, flowMap)
+	defer stmt.Close()
+	tx.Commit()
 }
 
 func updateLoop() {
 	log.Infof("Updating metrics from Github: %s", time.Now())
-	updatePrometheusMetrics(FetchAllIssues())
+	updateMetrics(FetchAllIssues())
 	log.Infof("Update finished: %s", time.Now())
 	log.Debugf("Update interval: %d", config.Repository.UpdateInterval)
 }
@@ -185,20 +169,22 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	// Make sure update interval has a default value
 	updateInterval := uint64(config.Repository.UpdateInterval)
 	if updateInterval <= 0 {
-		updateInterval = 30
+		updateInterval = 1800 // 30 mins
 	}
 
-	go func() {
-		updateLoop()
-		// Start update loop
-		gocron.Every(updateInterval).Seconds().Do(updateLoop)
-		<-gocron.Start()
-	}()
+	// Initialize connection to sqlite database
+	var err error
+	db, err = sql.Open("sqlite3", config.Database.URI)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 
-	// Start the websever
-	http.Handle("/metrics", promhttp.Handler())
-	log.Info("Beginning to serve on port :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Poll Github and update DB on a regular interval
+	updateLoop()
+	gocron.Every(updateInterval).Seconds().Do(updateLoop)
+	<-gocron.Start()
 }

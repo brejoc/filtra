@@ -1,0 +1,29 @@
+-- SQLite3 (denormalized) schema
+
+-- Types:
+-- * ALL
+-- * BLOCKED
+-- * CLOSED
+-- * IN_PROGRESS
+-- * OPEN_ISSUE
+-- * OPEN_BUG
+-- * OPEN_L3_BUG
+-- * PLANNED
+
+CREATE TABLE issue_counter(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	ts DATETIME NOT NULL,
+	type CHAR(255) NOT NULL,
+	value INTEGER NOT NULL
+);
+
+-- Types:
+-- * CYCLE_TIME
+-- * LEAD_TIME
+
+CREATE TABLE issue_flow(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	ts DATETIME NOT NULL,
+	type CHAR(255) NOT NULL,
+	value FLOAT NOT NULL
+);

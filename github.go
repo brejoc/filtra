@@ -104,7 +104,7 @@ func FetchAllIssues() *QueryPages {
 		query := Query{}
 		err := client.Query(context.Background(), &query, variables)
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
 		}
 
 		log.Debug("resultCount:", query.Repository.Issues.TotalCount)
