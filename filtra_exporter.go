@@ -179,17 +179,21 @@ func updateLoop() {
 }
 
 func main() {
-	// Setting loggger to debug level when debug flag was set.
+	// Setting logger to debug level when debug flag was set.
 	flag.Parse()
 	if *debugFlag == true {
 		log.SetLevel(log.DebugLevel)
 	}
+
+	// globally load toml config
+	loadConfig("./config.toml")
 
 	updateInterval := uint64(config.Repository.UpdateInterval)
 	if updateInterval <= 0 {
 		updateInterval = 30
 	}
 
+	// Start go routine that updates values continously in the background
 	go func() {
 		updateLoop()
 		// Start update loop

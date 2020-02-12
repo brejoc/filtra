@@ -15,32 +15,33 @@ type QueryPages struct {
 	Queries []Query
 }
 
-type (
-	queryTimelineItems struct {
-		PageInfo struct {
-			StartCursor githubv4.String
-			EndCursor   githubv4.String
-			HasNextPage bool
-		}
-		Nodes []struct {
-			Typename   string `graphql:"__typename"`
-			AddedEvent struct {
-				Project struct {
-					Name githubv4.String
-				}
-				CreatedAt githubv4.DateTime
-			} `graphql:"...on AddedToProjectEvent"`
-			MovedEvent struct {
-				Project struct {
-					Name githubv4.String
-				}
-				PreviousProjectColumnName githubv4.String
-				ProjectColumnName         githubv4.String
-				CreatedAt                 githubv4.DateTime
-			} `graphql:"...on MovedColumnsInProjectEvent"`
-		}
-	}
-)
+type project struct {
+	Name githubv4.String
+}
+type pageInfo struct {
+	StartCursor githubv4.String
+	EndCursor   githubv4.String
+	HasNextPage bool
+}
+type addedEvent struct {
+	Project   project
+	CreatedAt githubv4.DateTime
+}
+type movedEvent struct {
+	Project                   project
+	PreviousProjectColumnName githubv4.String
+	ProjectColumnName         githubv4.String
+	CreatedAt                 githubv4.DateTime
+}
+type node struct {
+	Typename   string     `graphql:"__typename"`
+	AddedEvent addedEvent `graphql:"...on AddedToProjectEvent"`
+	MovedEvent movedEvent `graphql:"...on MovedColumnsInProjectEvent"`
+}
+type queryTimelineItems struct {
+	PageInfo pageInfo
+	Nodes    []node
+}
 
 // Query is used to perform the Graphql query and also
 // holds the results afterwards.

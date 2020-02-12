@@ -28,8 +28,8 @@ type board struct {
 // A global config variable
 var config Config
 
-func init() {
-	if _, err := toml.DecodeFile("./config.toml", &config); err != nil {
+func loadConfig(pathToConfig string) {
+	if _, err := toml.DecodeFile(pathToConfig, &config); err != nil {
 		log.Fatal(err)
 	}
 	log.Debugf("%#v\n", config)
