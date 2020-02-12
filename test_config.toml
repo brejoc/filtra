@@ -1,0 +1,11 @@
+[repository]
+owner = "brejoc"
+name = "test"
+updateInterval = 3600
+
+[board]
+name = "test"
+plannedColumns  = ["Requested", "Planned"]
+blockedColumns  = ["Blocked / Postponed", "Waiting for Request"]
+bugLabels       = ["bug"]
+supportLabels   = ["L3", "L3 question"]
