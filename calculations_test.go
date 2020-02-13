@@ -9,7 +9,7 @@ import (
 
 func TestCalculateCycleTime(t *testing.T) {
 	// loading test config
-	loadConfig("./test_config.toml")
+	loadConfig("./test-data/test_config.toml")
 
 	currentTime := time.Now()
 
