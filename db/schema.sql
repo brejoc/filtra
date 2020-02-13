@@ -1,4 +1,12 @@
--- SQLite3 (denormalized) schema
+-- PostgreSQL (denormalized) schema
+
+-- Create user and database (example):
+--
+-- create role filtra with password 'filtra';
+-- alter role filtra with superuser login;
+-- create database filtra;
+-- grant all privileges on database filtra to filtra;
+
 
 -- Types:
 -- * ALL
@@ -11,10 +19,10 @@
 -- * PLANNED
 
 CREATE TABLE issue_counter(
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	ts DATETIME NOT NULL,
-	type CHAR(255) NOT NULL,
-	value INTEGER NOT NULL
+	id serial PRIMARY KEY,
+	ts timestamp(4) with time zone NOT NULL,
+	type varchar(255) NOT NULL,
+	value int NOT NULL
 );
 
 -- Types:
@@ -22,8 +30,8 @@ CREATE TABLE issue_counter(
 -- * LEAD_TIME
 
 CREATE TABLE issue_flow(
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	ts DATETIME NOT NULL,
-	type CHAR(255) NOT NULL,
-	value FLOAT NOT NULL
+	id serial PRIMARY KEY,
+	ts timestamp(4) with time zone NOT NULL,
+	type varchar(255) NOT NULL,
+	value float NOT NULL
 );

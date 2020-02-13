@@ -83,7 +83,7 @@ type Query struct {
 
 // FetchAllIssues fetches all of the issues from Github and returns
 // a pointer to the query struct.
-func FetchAllIssues() *QueryPages {
+func FetchAllIssues() (*QueryPages, error) {
 	queryPages := QueryPages{}
 
 	src := oauth2.StaticTokenSource(
@@ -106,6 +106,7 @@ func FetchAllIssues() *QueryPages {
 		err := client.Query(context.Background(), &query, variables)
 		if err != nil {
 			log.Error(err)
+			return nil, err
 		}
 
 		log.Debug("resultCount:", query.Repository.Issues.TotalCount)
@@ -130,6 +131,6 @@ func FetchAllIssues() *QueryPages {
 			variables["startCursor"] = githubv4.NewString(query.Repository.Issues.PageInfo.EndCursor)
 			continue
 		}
-		return &queryPages
+		return &queryPages, nil
 	}
 }

@@ -27,7 +27,11 @@ type board struct {
 }
 
 type database struct {
-	URI string
+	Host     string
+	Port     int
+	User     string
+	Password string
+	DBname   string
 }
 
 // A global config variable
