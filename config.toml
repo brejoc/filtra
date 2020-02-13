@@ -9,3 +9,6 @@ plannedColumns  = ["Requested", "Planned"]
 blockedColumns  = ["Blocked / Postponed", "Waiting for Request"]
 bugLabels       = ["bug"]
 supportLabels   = ["L3", "L3 question"]
+
+[database]
+URI = "./filtra.db"

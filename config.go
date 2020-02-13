@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Repository repository
 	Board      board
+	Database   database
 }
 
 type repository struct {
@@ -23,6 +24,10 @@ type board struct {
 	BlockedColumns []string
 	BugLabels      []string
 	SupportLabels  []string
+}
+
+type database struct {
+	URI string
 }
 
 // A global config variable
