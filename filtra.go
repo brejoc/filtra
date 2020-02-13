@@ -2,17 +2,25 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
 
 	"database/sql"
+
 	"github.com/jasonlvhit/gocron"
 	_ "github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
 )
 
-var debugFlag = flag.Bool("debug", false, "Sets log level to debug.")
-var configFileFlag = flag.String("config", "./config.toml", "Path to config file")
+const (
+	// exitFail is the exit code if the program
+	// fails.
+	exitFail = 1
+)
+
 var db *sql.DB
 
 func updateMetrics(results *QueryPages) {
@@ -161,9 +169,17 @@ func updateLoop() {
 	log.Debugf("Update interval: %d", config.Repository.UpdateInterval)
 }
 
-func main() {
+func run(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet(args[0], flag.ExitOnError)
+	var (
+		debugFlag      = flags.Bool("debug", false, "Sets log level to debug.")
+		configFileFlag = flags.String("config", "./config.toml", "Path to config file")
+	)
+	if err := flags.Parse(args[1:]); err != nil {
+		return err
+	}
+
 	// Setting logger to debug level when debug flag was set.
-	flag.Parse()
 	if *debugFlag == true {
 		log.SetLevel(log.DebugLevel)
 	}
@@ -193,4 +209,12 @@ func main() {
 	updateLoop()
 	gocron.Every(updateInterval).Seconds().Do(updateLoop)
 	<-gocron.Start()
+	return nil
+}
+
+func main() {
+	if err := run(os.Args, os.Stdout); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(exitFail)
+	}
 }
