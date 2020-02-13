@@ -2,12 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"strings"
 	"time"
 
 	"database/sql"
 	"github.com/jasonlvhit/gocron"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -115,7 +116,12 @@ func updateMetrics(results *QueryPages) {
 	// Prepare to insert in DB
 	tx, _ := db.Begin()
 	// Aux func to insert map values into DB
-	mapToDb := func(stmt *sql.Stmt, m map[string]interface{}) {
+	mapToDb := func(query string, m map[string]interface{}) {
+		stmt, err := tx.Prepare(query)
+		if err != nil {
+			log.Fatalf("Query error: %s - %s", query, err)
+		}
+		defer stmt.Close()
 		timeNow := time.Now()
 		for k, v := range m {
 			_, err := stmt.Exec(timeNow, k, v)
@@ -136,29 +142,27 @@ func updateMetrics(results *QueryPages) {
 		"PLANNED":     plannedIssueCounter,
 		// TODO: get in progress issues
 	}
-	stmt, err := tx.Prepare(`insert into issue_counter(ts, type, value) values (?, ?, ?)`)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer stmt.Close()
-	mapToDb(stmt, issueMap)
+	mapToDb("insert into issue_counter(ts, type, value) values ($1, $2, $3)", issueMap)
 
 	// Insert issue flows
 	flowMap := map[string]interface{}{
 		"LEAD_TIME":  averageLeadTime,
 		"CYCLE_TIME": averageCycleTime,
 	}
-	stmt, err = tx.Prepare(`insert into issue_flow(ts, type, value) values (?, ?, ?)`)
-	mapToDb(stmt, flowMap)
-	defer stmt.Close()
+	mapToDb("insert into issue_flow(ts, type, value) values ($1, $2, $3)", flowMap)
 	tx.Commit()
 }
 
 func updateLoop() {
 	log.Infof("Updating metrics from Github: %s", time.Now())
-	updateMetrics(FetchAllIssues())
-	log.Infof("Update finished: %s", time.Now())
-	log.Debugf("Update interval: %d", config.Repository.UpdateInterval)
+	issues, err := FetchAllIssues()
+	if err != nil {
+		log.Error("Not able to fetch issues from Github: ", err)
+	} else {
+		updateMetrics(issues)
+		log.Infof("Update finished: %s", time.Now())
+		log.Debugf("Update interval: %d", config.Repository.UpdateInterval)
+	}
 }
 
 func main() {
@@ -183,11 +187,17 @@ func main() {
 
 	// Initialize connection to sqlite database
 	var err error
-	db, err = sql.Open("sqlite3", config.Database.URI)
-	if err != nil {
-		log.Fatal(err)
-	}
+	var psqlConfig = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		config.Database.Host, config.Database.Port, config.Database.User, config.Database.Password, config.Database.DBname)
+
+	// Connect to PostgreSQL
+	db, _ = sql.Open("postgres", psqlConfig)
 	defer db.Close()
+	// Test if our connection actually works
+	err = db.Ping()
+	if err != nil {
+		log.Fatal("Unable to connect to PostgreSQL: %s", err)
+	}
 
 	// Poll Github and update DB on a regular interval
 	updateLoop()
