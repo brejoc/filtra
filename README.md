@@ -34,7 +34,7 @@ If you've got ideas or want ot see additional features or metrics, head over to 
 Step 1 is only is only needed for >= Go 1.10. With Go Modules dependencies are vendorized.
 
 1. Fetching the dependencies: `go get -d -v .`
-2. Running Filtra: `go run *.go`
+2. Running Filtra: `go run .`
 3. Access the metrics: `http://localhost:8080/metrics`
 
 All of the metrics we are interested in start with `gh_`.
