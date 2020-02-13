@@ -15,6 +15,7 @@ import (
 var debugFlag = flag.Bool("debug", false, "Sets log level to debug.")
 var ownerFlag = flag.String("owner", "brejoc", "Defines owner of repository")
 var repoFlag = flag.String("repo", "test", "Defines repository name")
+var configFileFlag = flag.String("config", "./config.toml", "Path to config file")
 
 //Define the metrics
 var ghAllIssues = prometheus.NewGauge(prometheus.GaugeOpts{
@@ -186,7 +187,11 @@ func main() {
 	}
 
 	// globally load toml config
-	loadConfig("./config.toml")
+	if fileExists(*configFileFlag) {
+		loadConfig(*configFileFlag)
+	} else {
+		log.Fatal("Please provide a config file with `-config <yourconfig>` or just create `config.toml` in this directory")
+	}
 
 	updateInterval := uint64(config.Repository.UpdateInterval)
 	if updateInterval <= 0 {
