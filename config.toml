@@ -11,4 +11,8 @@ bugLabels       = ["bug"]
 supportLabels   = ["L3", "L3 question"]
 
 [database]
-URI = "./filtra.db"
+host     = "localhost"
+port     = 5432
+user     = "filtra"
+password = "filtra"
+dbname   = "filtra"
