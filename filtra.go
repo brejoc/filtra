@@ -12,8 +12,7 @@ import (
 )
 
 var debugFlag = flag.Bool("debug", false, "Sets log level to debug.")
-var ownerFlag = flag.String("owner", "brejoc", "Defines owner of repository")
-var repoFlag = flag.String("repo", "test", "Defines repository name")
+var configFileFlag = flag.String("config", "./config.toml", "Path to config file")
 var db *sql.DB
 
 func updateMetrics(results *QueryPages) {
@@ -170,7 +169,11 @@ func main() {
 	}
 
 	// globally load toml config
-	loadConfig("./config.toml")
+	if fileExists(*configFileFlag) {
+		loadConfig(*configFileFlag)
+	} else {
+		log.Fatal("Please provide a config file with `-config <yourconfig>` or just create `config.toml` in this directory")
+	}
 
 	// Make sure update interval has a default value
 	updateInterval := uint64(config.Repository.UpdateInterval)
