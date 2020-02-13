@@ -13,8 +13,6 @@ import (
 )
 
 var debugFlag = flag.Bool("debug", false, "Sets log level to debug.")
-var ownerFlag = flag.String("owner", "brejoc", "Defines owner of repository")
-var repoFlag = flag.String("repo", "test", "Defines repository name")
 var configFileFlag = flag.String("config", "./config.toml", "Path to config file")
 
 //Define the metrics
