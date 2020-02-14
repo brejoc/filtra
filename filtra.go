@@ -222,7 +222,7 @@ func run(args []string, stdout io.Writer) error {
 	// Test if our connection actually works
 	err = db.Ping()
 	if err != nil {
-		log.Fatal("Unable to connect to PostgreSQL: %s", err)
+		log.Fatalf("Unable to connect to PostgreSQL: %s", err)
 	}
 
 	// Poll Github and update DB on a regular interval
