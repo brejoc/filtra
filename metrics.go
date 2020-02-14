@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// GithubMetrics stores all of the metrics gathered from graphql.
 type GithubMetrics struct {
 	allIssuesCounter    int
 	closedIssueCounter  int
