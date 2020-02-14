@@ -29,7 +29,7 @@ func updateLoop() {
 		log.Error("Not able to fetch issues from Github: ", err)
 	} else {
 		metrics := NewMetrics(issues)
-		metrics.writeToDB()
+		metrics.writeToDB(db)
 		log.Infof("Update finished: %s", time.Now())
 		log.Debugf("Update interval: %d", config.Repository.UpdateInterval)
 	}

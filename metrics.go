@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"strings"
 	"time"
 
@@ -25,7 +26,7 @@ type dbWriter interface {
 	writeToDb()
 }
 
-func (metrics GithubMetrics) writeToDB() {
+func (metrics GithubMetrics) writeToDB(db *sql.DB) {
 	// Prepare to insert in DB
 	tx, _ := db.Begin()
 	// Aux func to insert map values into DB
