@@ -23,25 +23,31 @@ const (
 
 var db *sql.DB
 
-func updateMetrics(results *QueryPages) {
-	allIssuesCounter := 0
-	closedIssueCounter := 0
-	openIssueCounter := 0
-	openBugsCounter := 0
-	openL3Counter := 0
-	blockedIssueCounter := 0
-	plannedIssueCounter := 0
+type githubMetrics struct {
+	allIssuesCounter    int
+	closedIssueCounter  int
+	openIssueCounter    int
+	openBugsCounter     int
+	openL3Counter       int
+	blockedIssueCounter int
+	plannedIssueCounter int
+	averageLeadTime     float64
+	averageCycleTime    float64
+}
+
+func getMetrics(results *QueryPages) githubMetrics {
+	metrics := githubMetrics{}
 
 	for _, result := range results.Queries {
 		// All issues
-		allIssuesCounter += len(result.Repository.Issues.Nodes)
+		metrics.allIssuesCounter += len(result.Repository.Issues.Nodes)
 
 		// Closed and open issues
 		for _, issue := range result.Repository.Issues.Nodes {
 			if issue.State == "CLOSED" {
-				closedIssueCounter++
+				metrics.closedIssueCounter++
 			} else if issue.State == "OPEN" {
-				openIssueCounter++
+				metrics.openIssueCounter++
 				for _, label := range issue.Labels.Nodes {
 					labelName := strings.ToLower(string(label.Name))
 					// Issues can only be counted, when they are on the right board. we have to
@@ -52,14 +58,14 @@ func updateMetrics(results *QueryPages) {
 							// Is it a bug?
 							for _, bugLabel := range config.Board.BugLabels {
 								if labelName == strings.ToLower(bugLabel) {
-									openBugsCounter++
+									metrics.openBugsCounter++
 									break
 								}
 							}
 							// Is it a support issue?
 							for _, supportLabel := range config.Board.SupportLabels {
 								if labelName == strings.ToLower(supportLabel) {
-									openL3Counter++
+									metrics.openL3Counter++
 									break
 								}
 							}
@@ -78,9 +84,9 @@ func updateMetrics(results *QueryPages) {
 				columnName := strings.ToLower(string(column.Column.Name))
 				if boardName == strings.ToLower(config.Board.Name) {
 					if isColumnInColumSlice(columnName, config.Board.BlockedColumns) {
-						blockedIssueCounter++
+						metrics.blockedIssueCounter++
 					} else if isColumnInColumSlice(columnName, config.Board.PlannedColumns) {
-						plannedIssueCounter++
+						metrics.plannedIssueCounter++
 					}
 				}
 			}
@@ -112,14 +118,18 @@ func updateMetrics(results *QueryPages) {
 	for _, leadTime := range leadTimes {
 		sumLeadTimes += leadTime
 	}
-	averageLeadTime := float64(sumLeadTimes.Hours()/24) / float64(closedIssueCounter)
+	metrics.averageLeadTime = float64(sumLeadTimes.Hours()/24) / float64(metrics.closedIssueCounter)
 
 	// Calculate average of cycle time
 	for _, cycleTime := range cycleTimes {
 		sumCycleTimes += cycleTime
 	}
-	averageCycleTime := float64(sumCycleTimes.Hours()/24) / float64(len(cycleTimes))
+	metrics.averageCycleTime = float64(sumCycleTimes.Hours()/24) / float64(len(cycleTimes))
 
+	return metrics
+}
+
+func writeToDB(metrics githubMetrics) {
 	// Prepare to insert in DB
 	tx, _ := db.Begin()
 	// Aux func to insert map values into DB
@@ -140,21 +150,21 @@ func updateMetrics(results *QueryPages) {
 
 	// Insert issue counters
 	issueMap := map[string]interface{}{
-		"ALL":         allIssuesCounter,
-		"BLOCKED":     blockedIssueCounter,
-		"CLOSED":      closedIssueCounter,
-		"OPEN_ISSUE":  openIssueCounter,
-		"OPEN_BUG":    openBugsCounter,
-		"OPEN_L3_BUG": openL3Counter,
-		"PLANNED":     plannedIssueCounter,
+		"ALL":         metrics.allIssuesCounter,
+		"BLOCKED":     metrics.blockedIssueCounter,
+		"CLOSED":      metrics.closedIssueCounter,
+		"OPEN_ISSUE":  metrics.openIssueCounter,
+		"OPEN_BUG":    metrics.openBugsCounter,
+		"OPEN_L3_BUG": metrics.openL3Counter,
+		"PLANNED":     metrics.plannedIssueCounter,
 		// TODO: get in progress issues
 	}
 	mapToDb("insert into issue_counter(ts, type, value) values ($1, $2, $3)", issueMap)
 
 	// Insert issue flows
 	flowMap := map[string]interface{}{
-		"LEAD_TIME":  averageLeadTime,
-		"CYCLE_TIME": averageCycleTime,
+		"LEAD_TIME":  metrics.averageLeadTime,
+		"CYCLE_TIME": metrics.averageCycleTime,
 	}
 	mapToDb("insert into issue_flow(ts, type, value) values ($1, $2, $3)", flowMap)
 	tx.Commit()
@@ -166,7 +176,8 @@ func updateLoop() {
 	if err != nil {
 		log.Error("Not able to fetch issues from Github: ", err)
 	} else {
-		updateMetrics(issues)
+		metrics := getMetrics(issues)
+		writeToDB(metrics)
 		log.Infof("Update finished: %s", time.Now())
 		log.Debugf("Update interval: %d", config.Repository.UpdateInterval)
 	}
