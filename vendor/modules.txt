@@ -12,8 +12,10 @@ github.com/golang/protobuf/proto
 github.com/jasonlvhit/gocron
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
-# github.com/mattn/go-sqlite3 v2.0.3+incompatible
-github.com/mattn/go-sqlite3
+# github.com/lib/pq v1.3.0
+github.com/lib/pq
+github.com/lib/pq/oid
+github.com/lib/pq/scram
 # github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
 # golang.org/x/net v0.0.0-20190628185345-da137c7871d7
