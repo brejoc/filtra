@@ -18,9 +18,17 @@
 -- * OPEN_L3_BUG
 -- * PLANNED
 
-CREATE TABLE issue_counter(
+CREATE TABLE repo_counter(
 	id serial PRIMARY KEY,
 	ts timestamp(4) with time zone NOT NULL,
+	type varchar(255) NOT NULL,
+	value int NOT NULL
+);
+
+CREATE TABLE board_counter(
+	id serial PRIMARY KEY,
+	ts timestamp(4) with time zone NOT NULL,
+	board varchar(255) NOT NULL,
 	type varchar(255) NOT NULL,
 	value int NOT NULL
 );
@@ -29,9 +37,10 @@ CREATE TABLE issue_counter(
 -- * CYCLE_TIME
 -- * LEAD_TIME
 
-CREATE TABLE issue_flow(
+CREATE TABLE board_flow(
 	id serial PRIMARY KEY,
 	ts timestamp(4) with time zone NOT NULL,
+	board varchar(255) NOT NULL,
 	type varchar(255) NOT NULL,
 	value float NOT NULL
 );
