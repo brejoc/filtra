@@ -20,7 +20,7 @@ func calculateWipTime() {
 // Calculates the cycle time of an issue.
 // Therefore we need to get the date of when the issue was moved to one of the "planned" columns first. The planned
 // columns are defined in the config. The cycle time is the difference between this date and when the issue was closed.
-func calculateCycleTime(timelineItems queryTimelineItems, issueClosedAt githubv4.DateTime, boardName string) time.Duration {
+func calculateCycleTime(timelineItems queryTimelineItems, closedAt githubv4.DateTime, boardName string) time.Duration {
 	for _, event := range timelineItems.Nodes {
 		if event.Typename == "MovedColumnsInProjectEvent" {
 			if strings.ToLower(string(event.MovedEvent.Project.Name)) == strings.ToLower(boardName) {
@@ -28,7 +28,7 @@ func calculateCycleTime(timelineItems queryTimelineItems, issueClosedAt githubv4
 				targetColumn := strings.ToLower(string(event.MovedEvent.ProjectColumnName))
 				// We only need to calculate if the target column is not also a planned column.
 				if isColumnInColumnSlice(previousColumn, config.Board.PlannedColumns) && !isColumnInColumnSlice(targetColumn, config.Board.PlannedColumns) {
-					return event.MovedEvent.CreatedAt.Sub(issueClosedAt.Time)
+					return closedAt.Sub(event.MovedEvent.CreatedAt.Time)
 				}
 			}
 		}

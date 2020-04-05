@@ -132,7 +132,7 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 
 			// Iterate over project boards
 			for _, column := range issue.ProjectCards.Nodes {
-				boardName := strings.ToLower(string(column.Column.Project.Name))
+				boardName := string(column.Column.Project.Name)
 				columnName := strings.ToLower(string(column.Column.Name))
 				boardMetrics := metrics.Board[boardName]
 
@@ -150,7 +150,7 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 					boardMetrics.leadTimes = append(boardMetrics.leadTimes, leadTime)
 
 					// get and append cycle time of issue
-					cycleTime := calculateCycleTime(issue.TimelineItems, issue.CreatedAt, boardName)
+					cycleTime := calculateCycleTime(issue.TimelineItems, issue.ClosedAt, boardName)
 					if cycleTime != time.Duration(0*time.Second) {
 						boardMetrics.cycleTimes = append(boardMetrics.cycleTimes, cycleTime)
 						log.Debug(cycleTime)
@@ -189,7 +189,7 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 		for _, leadTime := range boardMetrics.leadTimes {
 			sumLeadTimes += leadTime
 		}
-		boardMetrics.averageLeadTime = float64(sumLeadTimes.Hours()/24) / float64(boardMetrics.closedIssueCounter)
+		boardMetrics.averageLeadTime = float64(sumLeadTimes.Hours()/24) / float64(len(boardMetrics.leadTimes))
 
 		// Calculate average of cycle time
 		for _, cycleTime := range boardMetrics.cycleTimes {
