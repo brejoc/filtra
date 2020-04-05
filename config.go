@@ -16,6 +16,7 @@ type repository struct {
 	Owner          string
 	Name           string
 	UpdateInterval uint64
+	BoardList      []string
 }
 
 type board struct {

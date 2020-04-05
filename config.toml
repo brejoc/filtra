@@ -2,6 +2,7 @@
 owner = "brejoc"
 name = "test"
 updateInterval = 3600
+boardList = ["test", "test2"]
 
 [board]
 plannedColumns  = ["Todo", "Requested", "Planned", "Backlog"]

@@ -136,6 +136,11 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 				columnName := strings.ToLower(string(column.Column.Name))
 				boardMetrics := metrics.Board[boardName]
 
+				// Skip boards that are not part of the configured list
+				if !isColumnInColumnSlice(boardName, config.Repository.BoardList) {
+					continue
+				}
+
 				// Open / Closed issues inside board
 				if issue.State == "CLOSED" {
 					boardMetrics.closedIssueCounter++
