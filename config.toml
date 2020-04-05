@@ -4,7 +4,7 @@ name = "test"
 updateInterval = 3600
 
 [board]
-plannedColumns  = ["Requested", "Planned", "Backlog"]
+plannedColumns  = ["Todo", "Requested", "Planned", "Backlog"]
 blockedColumns  = ["Blocked", "Waiting", "Blocked / Postponed"]
 bugLabels       = ["bug"]
 supportLabels   = ["L3", "L3 question"]
