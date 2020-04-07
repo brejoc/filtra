@@ -1,8 +1,11 @@
-FROM golang:1.12
+FROM golang:alpine
 
-WORKDIR /go/src/app
+WORKDIR /go/src/filtra
 COPY . .
 
 RUN go install -v .
 
-ENTRYPOINT [ "app" ]
+VOLUME ["/go/etc"]
+
+ENTRYPOINT [ "/go/bin/filtra" ]
+CMD [ "-config=/go/etc/config.toml" ]
