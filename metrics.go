@@ -94,6 +94,11 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 	metrics := GithubMetrics{
 		Board: map[string]BoardMetrics{}}
 
+	boardList := make([]string, len(config.Boards))
+	for k := range config.Boards {
+		boardList = append(boardList, k)
+	}
+
 	for _, result := range results.Queries {
 		for _, issue := range result.Repository.Issues.Nodes {
 
@@ -111,7 +116,7 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 					labelName := strings.ToLower(string(label.Name))
 
 					// Is it a bug?
-					for _, bugLabel := range config.Board.BugLabels {
+					for _, bugLabel := range config.Repository.BugLabels {
 						if labelName == strings.ToLower(bugLabel) {
 							metrics.openBugsCounter++
 							isBug = true
@@ -120,7 +125,7 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 					}
 
 					// Is it a support issue?
-					for _, supportLabel := range config.Board.SupportLabels {
+					for _, supportLabel := range config.Repository.SupportLabels {
 						if labelName == strings.ToLower(supportLabel) {
 							metrics.openL3Counter++
 							isL3 = true
@@ -137,7 +142,7 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 				boardMetrics := metrics.Board[boardName]
 
 				// Skip boards that are not part of the configured list
-				if !isColumnInColumnSlice(boardName, config.Repository.BoardList) {
+				if !isColumnInColumnSlice(boardName, boardList) {
 					continue
 				}
 
@@ -168,9 +173,9 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 					}
 
 					// Check Columns for Planned and Blocked issues
-					if isColumnInColumnSlice(columnName, config.Board.BlockedColumns) {
+					if isColumnInColumnSlice(columnName, config.Boards[boardName].BlockedColumns) {
 						boardMetrics.blockedIssueCounter++
-					} else if isColumnInColumnSlice(columnName, config.Board.PlannedColumns) {
+					} else if isColumnInColumnSlice(columnName, config.Boards[boardName].PlannedColumns) {
 						boardMetrics.plannedIssueCounter++
 					}
 				}

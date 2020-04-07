@@ -2,13 +2,18 @@
 owner = "brejoc"
 name = "test"
 updateInterval = 3600
-boardList = ["test", "test2"]
-
-[board]
-plannedColumns  = ["Todo", "Requested", "Planned", "Backlog"]
-blockedColumns  = ["Blocked", "Waiting", "Blocked / Postponed"]
 bugLabels       = ["bug"]
 supportLabels   = ["L3", "L3 question"]
+
+[boards]
+
+  [test]
+  plannedColumns  = ["Requested", "Planned"]
+  blockedColumns  = ["Blocked / Postponed", "Waiting for Request"]
+
+  [test2]
+  plannedColumns  = ["Todo"]
+  blockedColumns  = ["Blocked"]
 
 [database]
 host     = "localhost"

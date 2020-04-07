@@ -27,7 +27,8 @@ func calculateCycleTime(timelineItems queryTimelineItems, closedAt githubv4.Date
 				previousColumn := strings.ToLower(string(event.MovedEvent.PreviousProjectColumnName))
 				targetColumn := strings.ToLower(string(event.MovedEvent.ProjectColumnName))
 				// We only need to calculate if the target column is not also a planned column.
-				if isColumnInColumnSlice(previousColumn, config.Board.PlannedColumns) && !isColumnInColumnSlice(targetColumn, config.Board.PlannedColumns) {
+				if isColumnInColumnSlice(previousColumn, config.Boards[boardName].PlannedColumns) &&
+					!isColumnInColumnSlice(targetColumn, config.Boards[boardName].PlannedColumns) {
 					return closedAt.Sub(event.MovedEvent.CreatedAt.Time)
 				}
 			}
