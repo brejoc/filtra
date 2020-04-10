@@ -39,13 +39,13 @@ func (metrics GithubMetrics) writeToDB(db *sql.DB) {
 	// Prepare to insert in DB
 	tx, _ := db.Begin()
 	// Aux func to insert map values into DB
+	timeNow := time.Now()
 	mapToDb := func(query string, m map[string]interface{}, extraArgs ...interface{}) {
 		stmt, err := tx.Prepare(query)
 		if err != nil {
 			log.Fatalf("Query error: %s - %s", query, err)
 		}
 		defer stmt.Close()
-		timeNow := time.Now()
 		for k, v := range m {
 			args := append([]interface{}{timeNow, k, v}, extraArgs...)
 			_, err := stmt.Exec(args...)
