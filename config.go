@@ -21,7 +21,6 @@ type repository struct {
 }
 
 type board struct {
-	// Name           string
 	PlannedColumns []string
 	BlockedColumns []string
 }

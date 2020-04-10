@@ -7,11 +7,11 @@ supportLabels   = ["L3", "L3 question"]
 
 [boards]
 
-  [test]
+  [boards.test]
   plannedColumns  = ["Requested", "Planned"]
   blockedColumns  = ["Blocked / Postponed", "Waiting for Request"]
 
-  [test2]
+  [boards.test2]
   plannedColumns  = ["Todo"]
   blockedColumns  = ["Blocked"]
 

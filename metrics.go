@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -15,7 +16,7 @@ type GithubMetrics struct {
 	openIssueCounter   int
 	openBugsCounter    int
 	openL3Counter      int
-	Board              map[string]BoardMetrics
+	Board              map[string]*BoardMetrics
 }
 
 // BoardMetrics stores the metrics of a particular board inside a repository.
@@ -26,8 +27,6 @@ type BoardMetrics struct {
 	openL3Counter       int
 	blockedIssueCounter int
 	plannedIssueCounter int
-	leadTimes           []time.Duration
-	cycleTimes          []time.Duration
 	averageLeadTime     float64
 	averageCycleTime    float64
 }
@@ -91,12 +90,19 @@ func (metrics GithubMetrics) writeToDB(db *sql.DB) {
 
 // NewMetrics returns a GithubMetrics struct.
 func NewMetrics(results *QueryPages) GithubMetrics {
-	metrics := GithubMetrics{
-		Board: map[string]BoardMetrics{}}
+	type boardLeadCycle struct {
+		accLeadTime  time.Duration
+		accCycleTime time.Duration
+	}
 
+	metrics := GithubMetrics{Board: map[string]*BoardMetrics{}}
 	boardList := make([]string, len(config.Boards))
+	timeCalc := map[string]*boardLeadCycle{}
+
 	for k := range config.Boards {
 		boardList = append(boardList, k)
+		timeCalc[k] = &boardLeadCycle{}
+		metrics.Board[k] = &BoardMetrics{}
 	}
 
 	for _, result := range results.Queries {
@@ -139,7 +145,6 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 			for _, column := range issue.ProjectCards.Nodes {
 				boardName := string(column.Column.Project.Name)
 				columnName := strings.ToLower(string(column.Column.Name))
-				boardMetrics := metrics.Board[boardName]
 
 				// Skip boards that are not part of the configured list
 				if !isColumnInColumnSlice(boardName, boardList) {
@@ -148,61 +153,50 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 
 				// Open / Closed issues inside board
 				if issue.State == "CLOSED" {
-					boardMetrics.closedIssueCounter++
-					// get and append lead time of issue
+					metrics.Board[boardName].closedIssueCounter++
 
+					// get and append lead time of issue
 					leadTime := calculateLeadTime(issue.CreatedAt, issue.ClosedAt)
-					boardMetrics.leadTimes = append(boardMetrics.leadTimes, leadTime)
+					timeCalc[boardName].accLeadTime += leadTime
 
 					// get and append cycle time of issue
-					cycleTime := calculateCycleTime(issue.TimelineItems, issue.ClosedAt, boardName)
-					if cycleTime != time.Duration(0*time.Second) {
-						boardMetrics.cycleTimes = append(boardMetrics.cycleTimes, cycleTime)
-						log.Debug(cycleTime)
+					cycleTime := calculateCycleTime(issue.TimelineItems, issue.CreatedAt, issue.ClosedAt, boardName)
+					timeCalc[boardName].accCycleTime += cycleTime
+
+					if log.IsLevelEnabled(log.DebugLevel) {
+						fmtOut, _ := json.MarshalIndent(issue.TimelineItems, "", "  ")
+						log.Debugf("Issue: %+v, Board: %s, Lead time: %v, Cycle time: %v, Created:%v, Closed: %v, timeline:%s\n",
+							issue.Url, boardName, leadTime, cycleTime, issue.CreatedAt, issue.ClosedAt, fmtOut)
 					}
 
 				} else if issue.State == "OPEN" {
-					boardMetrics.openIssueCounter++
+					metrics.Board[boardName].openIssueCounter++
 
 					// Open Bugs and L3s inside board
 					if isBug {
-						boardMetrics.openBugsCounter++
+						metrics.Board[boardName].openBugsCounter++
 					}
 					if isL3 {
-						boardMetrics.openL3Counter++
+						metrics.Board[boardName].openL3Counter++
 					}
 
 					// Check Columns for Planned and Blocked issues
 					if isColumnInColumnSlice(columnName, config.Boards[boardName].BlockedColumns) {
-						boardMetrics.blockedIssueCounter++
+						metrics.Board[boardName].blockedIssueCounter++
 					} else if isColumnInColumnSlice(columnName, config.Boards[boardName].PlannedColumns) {
-						boardMetrics.plannedIssueCounter++
+						metrics.Board[boardName].plannedIssueCounter++
 					}
 				}
-
-				metrics.Board[boardName] = boardMetrics
 			}
 		}
 	}
 
-	// Calculate average and lead times for each board
+	// Calculate average lead and cycle times
 	for boardName, boardMetrics := range metrics.Board {
-		var sumLeadTimes time.Duration
-		var sumCycleTimes time.Duration
-
-		// Calculate average of lead times
-		for _, leadTime := range boardMetrics.leadTimes {
-			sumLeadTimes += leadTime
-		}
-		boardMetrics.averageLeadTime = float64(sumLeadTimes.Hours()/24) / float64(len(boardMetrics.leadTimes))
-
-		// Calculate average of cycle time
-		for _, cycleTime := range boardMetrics.cycleTimes {
-			sumCycleTimes += cycleTime
-		}
-		boardMetrics.averageCycleTime = float64(sumCycleTimes.Hours()/24) / float64(len(boardMetrics.cycleTimes))
-
-		metrics.Board[boardName] = boardMetrics
+		metrics.Board[boardName].averageLeadTime =
+			timeCalc[boardName].accLeadTime.Hours() / 24 / float64(boardMetrics.closedIssueCounter)
+		metrics.Board[boardName].averageCycleTime =
+			timeCalc[boardName].accCycleTime.Hours() / 24 / float64(boardMetrics.closedIssueCounter)
 	}
 
 	return metrics
