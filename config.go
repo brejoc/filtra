@@ -8,7 +8,7 @@ import (
 // Config stores the values read from the TOML config
 type Config struct {
 	Repository repository
-	Board      board
+	Boards     map[string]board
 	Database   database
 }
 
@@ -16,14 +16,13 @@ type repository struct {
 	Owner          string
 	Name           string
 	UpdateInterval uint64
+	BugLabels      []string
+	SupportLabels  []string
 }
 
 type board struct {
-	Name           string
 	PlannedColumns []string
 	BlockedColumns []string
-	BugLabels      []string
-	SupportLabels  []string
 }
 
 type database struct {

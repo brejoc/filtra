@@ -9,7 +9,6 @@ import (
 
 	"database/sql"
 
-	"github.com/jasonlvhit/gocron"
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
@@ -78,10 +77,10 @@ func run(args []string, stdout io.Writer) error {
 	}
 
 	// Poll Github and update DB on a regular interval
-	updateLoop()
-	gocron.Every(updateInterval).Seconds().Do(updateLoop)
-	<-gocron.Start()
-	return nil
+	for {
+		updateLoop()
+		time.Sleep(time.Duration(updateInterval) * time.Second)
+	}
 }
 
 func main() {

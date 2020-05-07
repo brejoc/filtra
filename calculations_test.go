@@ -12,16 +12,17 @@ func TestCalculateCycleTime(t *testing.T) {
 	loadConfig("./test-data/test_config.toml")
 
 	currentTime := time.Now()
+	boardName := "test"
 
 	node1 := &node{}
 	node1.Typename = "MovedColumnsInProjectEvent"
 	node1.AddedEvent = addedEvent{}
 	node1.AddedEvent.Project = project{}
-	node1.AddedEvent.Project.Name = "test"
+	node1.AddedEvent.Project.Name = githubv4.String(boardName)
 	node1.AddedEvent.CreatedAt = githubv4.DateTime{currentTime.Add(time.Hour * -24)}
 	node1.MovedEvent = movedEvent{}
 	node1.MovedEvent.Project = project{}
-	node1.MovedEvent.Project.Name = "test"
+	node1.MovedEvent.Project.Name = githubv4.String(boardName)
 	node1.MovedEvent.PreviousProjectColumnName = "Planned"
 	node1.MovedEvent.ProjectColumnName = "Done"
 	node1.MovedEvent.CreatedAt = githubv4.DateTime{currentTime.Add(time.Hour * -24)}
@@ -30,8 +31,9 @@ func TestCalculateCycleTime(t *testing.T) {
 	timelineItems.Nodes = []node{}
 	timelineItems.Nodes = append(timelineItems.Nodes, *node1)
 
-	want := time.Hour * -24
-	got := calculateCycleTime(timelineItems, githubv4.DateTime{currentTime})
+	want := time.Hour * 24
+	got := calculateCycleTime(timelineItems, node1.MovedEvent.CreatedAt,
+		githubv4.DateTime{currentTime}, boardName)
 	if got != want {
 		t.Errorf("Got %s for cycle time, but expected %s", got, want)
 	}
