@@ -5,7 +5,7 @@ Filtra aims to extract information like lead and cycle times from Github repos f
 
 # The Architecture
 
-In its core Filtra is a Prometheus exporter that fetches all of the issues from a Github repository and provides the gathered and enriched (lead and cycle times) data as metrics. Those metrics are then scraped by Prometheus and visualized with Grafana.
+Filtra fetches all issues from a Github repository and provides the gathered and enriched (lead and cycle times) data as metrics. Those metrics are then stored in a PostgreSQL database and visualized with Grafana.
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ The labels for bugs and support issues will also soon be configurable.
 
 ## Work In Progress
 
-The prometheus exporter is mostly done. Some metrics tweaking is still needed and additional metrics could also be gathered. Prometheus knows where to fetch the Metrics, but Grafana is not yet automagically showing any graphs. If you know how to make this happen, please ping me or open a pull request.
+Github scraping is mostly done. Some metrics tweaking is still needed and additional metrics could also be gathered. Grafana is not yet automagically showing any graphs. If you know how to make this happen, please ping me or open a pull request.
 
 If you've got ideas or want ot see additional features or metrics, head over to the [issues](https://github.com/brejoc/filtra/issues).
 
@@ -42,15 +42,13 @@ All of the metrics we are interested in start with `gh_`.
 
 # Deployment
 
-You can use Docker Compose to get Filtra running. But please check the [config file](https://github.com/brejoc/filtra/blob/master/config.toml) first. You might also want to check the [Prometheus config](https://github.com/brejoc/filtra/blob/master/prometheus.yml). For testing puposes the interval is set to 60 seconds, which is probably way too often for this kind of application. You should also have your Github token exported as the environment varible `$GITHUB_TOKEN`. But of course you can also paste it into the `docker-compose.yml`.
+You can use Docker Compose to get Filtra running. But please check the [config file](https://github.com/brejoc/filtra/blob/master/config.toml) first. You should also have your Github token exported as the environment varible `$GITHUB_TOKEN`. But of course you can also paste it into the `docker-compose.yml`.
 
 ```
-mkdir prometheus_data
 mkdir grafana_data
 docker-compose up
 ```
 
-Prometheus needs some seconds to fetch the metrics. After that you can reach Grafana at `localhost:3000'.
 
-1. Add the Prometheus data source.
-2. Add the charts you want to see. Everything should begin with `gh_`.
+1. Add the PostgreSQL data source.
+2. Add the charts you want to see.
