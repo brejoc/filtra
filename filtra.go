@@ -47,6 +47,7 @@ func run(args []string, stdout io.Writer) error {
 	// Setting logger to debug level when debug flag was set.
 	if *debugFlag == true {
 		log.SetLevel(log.DebugLevel)
+		log.Debugf("Config: %+v", config)
 	}
 
 	// globally load toml config

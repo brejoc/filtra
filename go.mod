@@ -1,5 +1,7 @@
 module github.com/brejoc/filtra
 
+go 1.14
+
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/brejoc/githubv4 v0.0.0-20190628081146-ff7a0d1c9aa4
