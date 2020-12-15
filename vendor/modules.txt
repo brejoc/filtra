@@ -1,34 +1,44 @@
 # github.com/BurntSushi/toml v0.3.1
+## explicit
 github.com/BurntSushi/toml
 # github.com/brejoc/githubv4 v0.0.0-20190628081146-ff7a0d1c9aa4
+## explicit
 github.com/brejoc/githubv4
 # github.com/brejoc/graphql v0.0.0-20190628081354-06d07f6a803c
+## explicit
 github.com/brejoc/graphql
 github.com/brejoc/graphql/ident
 github.com/brejoc/graphql/internal/jsonutil
 # github.com/golang/protobuf v1.3.1
+## explicit
 github.com/golang/protobuf/proto
+# github.com/jasonlvhit/gocron v0.0.0-20191106203602-f82992d443f4
+## explicit
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/lib/pq v1.3.0
+## explicit
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
 # github.com/sirupsen/logrus v1.4.2
+## explicit
 github.com/sirupsen/logrus
 # golang.org/x/net v0.0.0-20190628185345-da137c7871d7
-golang.org/x/net/context/ctxhttp
+## explicit
 golang.org/x/net/context
+golang.org/x/net/context/ctxhttp
 # golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
+## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
 # golang.org/x/sys v0.0.0-20190422165155-953cdadca894
 golang.org/x/sys/unix
 # google.golang.org/appengine v1.4.0
-google.golang.org/appengine/urlfetch
 google.golang.org/appengine/internal
-google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
+google.golang.org/appengine/internal/urlfetch
+google.golang.org/appengine/urlfetch

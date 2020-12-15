@@ -96,7 +96,7 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 	}
 
 	metrics := GithubMetrics{Board: map[string]*BoardMetrics{}}
-	boardList := make([]string, len(config.Boards))
+	boardList := []string{}
 	timeCalc := map[string]*boardLeadCycle{}
 
 	for k := range config.Boards {
