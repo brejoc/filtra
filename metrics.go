@@ -142,9 +142,9 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 			}
 
 			// Iterate over project boards
-			for _, column := range issue.ProjectCards.Nodes {
-				boardName := string(column.Column.Project.Name)
-				columnName := strings.ToLower(string(column.Column.Name))
+			for _, project := range issue.ProjectItems.Nodes {
+				boardName := string(project.Project.Title)
+				columnName := strings.ToLower(string(project.FieldValueByName.Column.Name))
 
 				// Skip boards that are not part of the configured list
 				if !isColumnInColumnSlice(boardName, boardList) {

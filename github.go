@@ -61,16 +61,18 @@ type Query struct {
 				Url           githubv4.URI
 				State         githubv4.StatusState
 				TimelineItems queryTimelineItems `graphql:"timelineItems(itemTypes: [ADDED_TO_PROJECT_EVENT, MOVED_COLUMNS_IN_PROJECT_EVENT], first: 250)"`
-				ProjectCards  struct {
+				ProjectItems  struct {
 					Nodes []struct {
-						Column struct {
-							Name    githubv4.String
-							Project struct {
-								Name githubv4.String
-							}
-						}
+						Project struct {
+							Title	githubv4.String
+					        }
+						FieldValueByName struct {
+							Column struct {
+								Name		githubv4.String
+							} `graphql:"...on ProjectV2ItemFieldSingleSelectValue"`
+						} `graphql:"fieldValueByName(name: \"Status\")"`
 					}
-				} `graphql:"projectCards"`
+				} `graphql:"projectItems(last: 20)"`
 				Labels struct {
 					Nodes []struct {
 						Name githubv4.String
@@ -122,8 +124,8 @@ func FetchAllIssues() (*QueryPages, error) {
 				log.Debug("              ", label.Name)
 			}
 
-			for _, ghColumn := range issue.ProjectCards.Nodes {
-				log.Debug("       Column:", ghColumn.Column.Name)
+			for _, ghProjectItem := range issue.ProjectItems.Nodes {
+				log.Debug("       Project:", ghProjectItem.Project.Title)
 			}
 		}
 		queryPages.Queries = append(queryPages.Queries, query)
