@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"os"
+	"regexp"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -112,16 +114,22 @@ func FetchAllIssues() (*QueryPages, error) {
 		"repo":        githubv4.String(config.Repository.Name),
 	}
 
-	pageCount := 0
+	pageCount := 1
 	for {
-		pageCount++
 		log.Debug("Fetching page: ", pageCount)
 		query := Query{}
 		err := client.Query(context.Background(), &query, variables)
 		if err != nil {
 			log.Error(err)
+			match, _ := regexp.MatchString("non-200 OK status code: 502 Bad Gateway body.*", err.Error())
+			if match {
+				log.Error("Found Bad Gateway error. Retrying request in 2 seconds...")
+				time.Sleep(2 * time.Second)
+				continue
+			}
 			return nil, err
 		}
+		pageCount++
 
 		log.Debug("resultCount:", query.Repository.Issues.TotalCount)
 		log.Debug("      nodes:", query.Repository.Issues.Nodes)
