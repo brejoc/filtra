@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"os"
+	"regexp"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -61,12 +63,26 @@ type Query struct {
 				Url           githubv4.URI
 				State         githubv4.StatusState
 				TimelineItems queryTimelineItems `graphql:"timelineItems(itemTypes: [ADDED_TO_PROJECT_EVENT, MOVED_COLUMNS_IN_PROJECT_EVENT], first: 250)"`
+				ProjectItems  struct {
+					Nodes []struct {
+						Project struct {
+							Title	githubv4.String
+							Closed	githubv4.Boolean
+					        }
+						FieldValueByName struct {
+							Column struct {
+								Name		githubv4.String
+							} `graphql:"...on ProjectV2ItemFieldSingleSelectValue"`
+						} `graphql:"fieldValueByName(name: \"Status\")"`
+					}
+				} `graphql:"projectItems(last: 20)"`
 				ProjectCards  struct {
 					Nodes []struct {
 						Column struct {
-							Name    githubv4.String
+							Name	githubv4.String
 							Project struct {
-								Name githubv4.String
+								Name	githubv4.String
+								Closed	githubv4.Boolean
 							}
 						}
 					}
@@ -98,16 +114,22 @@ func FetchAllIssues() (*QueryPages, error) {
 		"repo":        githubv4.String(config.Repository.Name),
 	}
 
-	pageCount := 0
+	pageCount := 1
 	for {
-		pageCount++
 		log.Debug("Fetching page: ", pageCount)
 		query := Query{}
 		err := client.Query(context.Background(), &query, variables)
 		if err != nil {
 			log.Error(err)
+			match, _ := regexp.MatchString("non-200 OK status code: 502 Bad Gateway body.*", err.Error())
+			if match {
+				log.Error("Found Bad Gateway error. Retrying request in 2 seconds...")
+				time.Sleep(2 * time.Second)
+				continue
+			}
 			return nil, err
 		}
+		pageCount++
 
 		log.Debug("resultCount:", query.Repository.Issues.TotalCount)
 		log.Debug("      nodes:", query.Repository.Issues.Nodes)
@@ -122,8 +144,12 @@ func FetchAllIssues() (*QueryPages, error) {
 				log.Debug("              ", label.Name)
 			}
 
+			for _, ghProjectItem := range issue.ProjectItems.Nodes {
+				log.Debug("       Organization project (New): ", ghProjectItem.Project.Title, " - ", ghProjectItem.FieldValueByName.Column.Name)
+			}
+
 			for _, ghColumn := range issue.ProjectCards.Nodes {
-				log.Debug("       Column:", ghColumn.Column.Name)
+				log.Debug("       Repository project: ", ghColumn.Column.Project.Name, " - ", ghColumn.Column.Name)
 			}
 		}
 		queryPages.Queries = append(queryPages.Queries, query)

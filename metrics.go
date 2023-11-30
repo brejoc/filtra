@@ -95,6 +95,11 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 		accCycleTime time.Duration
 	}
 
+	type ProjectToProcess struct {
+		boardName	string
+		columnName	string
+	}
+
 	metrics := GithubMetrics{Board: map[string]*BoardMetrics{}}
 	boardList := []string{}
 	timeCalc := map[string]*boardLeadCycle{}
@@ -141,10 +146,34 @@ func NewMetrics(results *QueryPages) GithubMetrics {
 				}
 			}
 
-			// Iterate over project boards
+			projectsToProcess := []ProjectToProcess{}
+
+			// Iterate over project boards (ProjectV2)
+			for _, project := range issue.ProjectItems.Nodes {
+				// Only process open boards.
+				if project.Project.Closed {
+					continue
+				}
+				boardName := string(project.Project.Title)
+				columnName := strings.ToLower(string(project.FieldValueByName.Column.Name))
+				projectsToProcess = append(projectsToProcess, ProjectToProcess{boardName: boardName, columnName: columnName})
+			}
+
+			// Iterate also over old projects (Project) only if not closed
 			for _, column := range issue.ProjectCards.Nodes {
+				// Only process open boards.
+				if column.Column.Project.Closed {
+					continue
+				}
 				boardName := string(column.Column.Project.Name)
 				columnName := strings.ToLower(string(column.Column.Name))
+				projectsToProcess = append(projectsToProcess, ProjectToProcess{boardName: boardName, columnName: columnName})
+			}
+
+			// Now start processing the collected boards
+			for _, project := range projectsToProcess {
+				boardName := project.boardName
+				columnName := project.columnName
 
 				// Skip boards that are not part of the configured list
 				if !isColumnInColumnSlice(boardName, boardList) {
