@@ -65,6 +65,7 @@ type Query struct {
 					Nodes []struct {
 						Project struct {
 							Title	githubv4.String
+							Closed	githubv4.Boolean
 					        }
 						FieldValueByName struct {
 							Column struct {
@@ -73,6 +74,17 @@ type Query struct {
 						} `graphql:"fieldValueByName(name: \"Status\")"`
 					}
 				} `graphql:"projectItems(last: 20)"`
+				ProjectCards  struct {
+					Nodes []struct {
+						Column struct {
+							Name	githubv4.String
+							Project struct {
+								Name	githubv4.String
+								Closed	githubv4.Boolean
+							}
+						}
+					}
+				} `graphql:"projectCards"`
 				Labels struct {
 					Nodes []struct {
 						Name githubv4.String
@@ -125,7 +137,11 @@ func FetchAllIssues() (*QueryPages, error) {
 			}
 
 			for _, ghProjectItem := range issue.ProjectItems.Nodes {
-				log.Debug("       Project:", ghProjectItem.Project.Title)
+				log.Debug("       Organization project (New): ", ghProjectItem.Project.Title, " - ", ghProjectItem.FieldValueByName.Column.Name)
+			}
+
+			for _, ghColumn := range issue.ProjectCards.Nodes {
+				log.Debug("       Repository project: ", ghColumn.Column.Project.Name, " - ", ghColumn.Column.Name)
 			}
 		}
 		queryPages.Queries = append(queryPages.Queries, query)
